@@ -72,6 +72,14 @@ input[type=text]:focus{border-color:var(--cyan)}
 .path-l{display:flex;justify-content:center;gap:6px;font-size:11px;color:var(--dim)}
 .path-l span{width:44px;text-align:center}
 #app.still *{animation:none!important}
+/* 내 선택 플로차트 */
+.flow{margin:22px 0 4px;background:#d2d2d2;background-image:linear-gradient(120deg,rgba(255,255,255,.18) 0 30%,transparent 30% 60%,rgba(0,0,0,.04) 60%);padding:14px 10px 6px;text-align:left}
+.flh{font-size:13px;letter-spacing:.14em;color:#1d4f91;font-weight:700;margin:0 4px 4px}
+.flow svg{display:block;width:100%;height:auto}
+.flow .fl{font-size:13px;fill:#333;font-family:'Noto Sans KR',sans-serif}
+.flow .fk{font-size:20px;font-weight:900;fill:#fff;font-family:'Noto Sans KR',sans-serif}
+.flow .ft{font-size:13px;font-weight:700;fill:#f2f2f2;font-family:'Noto Sans KR',sans-serif}
+.flow .fk:not(.on),.flow .ft:not(.on){fill:#eeeeee}
 /* 처음 ↔ 마지막 비교 */
 .cmp{margin:26px 0 8px;text-align:left}
 .cbox{background:rgba(8,11,14,.86);border-left:4px solid #3f6a8f;padding:14px 16px;display:grid;grid-template-columns:44px 1fr;column-gap:12px;align-items:center}
@@ -190,10 +198,32 @@ function renderIntro() {
   function start() { S.nick = n.value.trim(); S.step = 0; save(); render(); }
 }
 
+// 내 선택 플로차트 (세로): 줄 = 처음·정보 1~4 후, 칸 = A/B/C. 고른 칸은 파랑, 유지 선은 파랑, 바꾼 선은 주황
+var SHORT = { A: '진정한 선택', B: '방어적 선택', C: '다른 설명' };
+function flow() {
+  var X = { A: 14, B: 124, C: 234 }, W = 98, H = 46, Y0 = 52, DY = 100, svg = '';
+  var labels = ['처음', '정보 1 후', '정보 2 후', '정보 3 후', '정보 4 후'];
+  // 선 먼저 (칸 아래에 깔리게)
+  for (var i = 0; i < 4; i++) {
+    var a = S.picks[i], b = S.picks[i + 1], x1 = X[a] + W / 2, x2 = X[b] + W / 2, y1 = Y0 + i * DY + H, y2 = Y0 + (i + 1) * DY, ym = (y1 + y2) / 2;
+    svg += '<path d="M' + x1 + ' ' + y1 + ' V' + ym + ' H' + x2 + ' V' + y2 + '" fill="none" stroke="' + (a === b ? '#1d6fd6' : '#ff7a1a') + '" stroke-width="4"/>';
+  }
+  for (i = 0; i < 5; i++) {
+    var y = Y0 + i * DY;
+    svg += '<text x="14" y="' + (y - 12) + '" class="fl">' + labels[i] + '</text>';
+    ['A', 'B', 'C'].forEach(function (k) {
+      var on = S.picks[i] === k;
+      svg += '<rect x="' + X[k] + '" y="' + y + '" width="' + W + '" height="' + H + '" fill="' + (on ? '#1d6fd6' : '#c4c4c4') + '"/>' +
+        '<text x="' + (X[k] + 10) + '" y="' + (y + 29) + '" class="fk' + (on ? ' on' : '') + '">' + k + '</text>' +
+        '<text x="' + (X[k] + 30) + '" y="' + (y + 28) + '" class="ft' + (on ? ' on' : '') + '">' + SHORT[k] + '</text>';
+    });
+  }
+  return '<div class="flow"><div class="flh">내 선택 흐름</div><svg viewBox="0 0 346 ' + (Y0 + 4 * DY + H + 16) + '">' + svg + '</svg></div>';
+}
+
 function renderEnd() {
   var h = '<div class="end"><h2>' + (S.sent ? '제출되었습니다' : '제출 중…') + '</h2>';
-  h += '<div class="path">' + S.picks.map(function (k, i) { return (i ? '<span>›</span>' : '') + '<i class="' + k + '">' + k + '</i>'; }).join('') + '</div>';
-  h += '<div class="path-l"><span>처음</span><span>1</span><span>2</span><span>3</span><span>4</span></div>';
+  if (S.picks.length === 5) h += flow();
   h += '<p>' + esc(S.nick) + '님의 선택이 기록되었습니다.<br>진행자의 안내를 기다려 주세요.</p>';
   // 내 처음 선택 ↔ 마지막 선택 비교 + 단계별 기록 (해석은 넣지 않는다)
   var f = S.picks[0], l = S.picks[4];
