@@ -585,15 +585,15 @@ setPage({
     return `<div class="scene"><div class="rain"></div>
       <div class="clock"><div class="tag">10.25 질문 · 남은 시간</div><div class="bar"><i data-timerbar="q"></i></div><div class="timer" data-timer="q">${fmt(T.q.left)}</div></div>
       <div class="wrap">
-        <div class="sec">${sh(1, 'A / B 핵심 주장')}
+        <div class="sec">${sh(1, '질문')}
+          <div class="qbox"><div><div class="q">${esc(c.question)}</div><div class="dm"><span>제출</span>${esc(c.submit)}<small>다른 멤버의 답변은 보이지 않습니다</small></div></div>${qrHud(formOf('q1'))}</div></div>
+        <div class="sec">${sh(2, '원본 영상')}
+          <div class="src"><a href="${esc(c.shortsUrl)}" target="_blank" rel="noopener">${esc(c.shortsUrl)}</a></div></div>
+        <div class="sec">${sh(3, 'A / B 핵심 주장')}
           <div class="ch"><span class="ct">${esc(c.claimA)}</span><span class="ck A">A</span></div>
           <div class="ch"><span class="ct">${esc(c.claimB)}</span><span class="ck B">B</span></div></div>
-        <div class="sec">${sh(2, '원문 댓글')}
+        <div class="sec">${sh(4, '원문 댓글')}
           <div class="evid"><div class="hd">유튜브 댓글 중 원 댓글과 A·B가 주고받은 댓글을 원문 그대로 실었습니다. 작성자 이름만 A·B로 바꾸고 좋아요 수는 가렸습니다.</div>${comments()}</div></div>
-        <div class="sec">${sh(3, '원본 영상')}
-          <div class="src"><a href="${esc(c.shortsUrl)}" target="_blank" rel="noopener">${esc(c.shortsUrl)}</a></div></div>
-        <div class="sec">${sh(4, '질문')}
-          <div class="qbox"><div><div class="q">${esc(c.question)}</div><div class="dm"><span>제출</span>${esc(c.submit)}<small>다른 멤버의 답변은 보이지 않습니다</small></div></div>${qrHud(formOf('q1'))}</div></div>
       </div></div>
       ${ctrl(`<button class="b" data-act="close">가리기 (←)</button><button class="b pri" data-act="tToggle" data-n="q">시간 시작/정지 (T)</button>
         <button class="b" data-act="tReset" data-n="q" data-m="${c.minutes}">시간 리셋</button><button class="b" data-act="tAdd" data-n="q">+1분</button>`)}`;
