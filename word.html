@@ -626,7 +626,7 @@ setPage({
         <div class="who"><span>${esc(r.nick || '(닉네임 없음)')}</span>${!big && U.sel.includes(r.id) ? '<span class="picked">선택됨</span>' : ''}</div>
         ${U.filter !== 'B' ? `<div class="ln"><b class="kA">A</b><span>${markBan(r.a)}</span></div>` : ''}
         ${U.filter !== 'A' ? `<div class="ln"><b class="kB">B</b><span>${markBan(r.b)}</span></div>` : ''}</div>`;
-    const seg = `<div class="seg">${[['all', 'A·B 함께'], ['A', 'A만'], ['B', 'B만']].map(f => `<button class="${U.filter === f[0] ? 'on' : ''}" data-act="filter" data-f="${f[0]}">${f[1]}</button>`).join('')}</div>`;
+    const seg = `<div class="seg">${[['all', 'A·B 둘 다'], ['A', 'A 문장만'], ['B', 'B 문장만']].map(f => `<button class="${U.filter === f[0] ? 'on' : ''}" data-act="filter" data-f="${f[0]}">${f[1]}</button>`).join('')}</div>`;
     const info = `${all.length}명${BAN_CSV && loadedAt ? ` · 자동 갱신 ${loadedAt} (15초마다, A 또는 [최신화] = 지금 바로)` : ''}${U.cut ? ` · <b class="cutnote">${new Date(U.cut).toTimeString().slice(0, 5)} 이후만 집계</b> <b class="lnk" data-act="showAll">전체 보기</b>` : ''}`;
     const top = `<div class="wtop"><div class="wtitle"><button class="back" data-act="mode" data-m="${U.mode === 'compare' ? 'wall' : 'rule'}">←</button><div><h2>${U.mode === 'compare' ? '골라 본 문장' : "'안다' 없이 다시 쓴 문장"}</h2><span class="winfo">${info}</span></div></div>
       <div class="wbtns">${seg}<button class="tbtn reload" data-act="reload">⟳ 최신화 <kbd>A</kbd></button><button class="tbtn reset" data-act="resetCount">↺ 리셋</button></div></div>`;
