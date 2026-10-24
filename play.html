@@ -71,6 +71,7 @@ input[type=text]:focus{border-color:var(--cyan)}
 .path span{color:#3f6a8f}
 .path-l{display:flex;justify-content:center;gap:6px;font-size:11px;color:var(--dim)}
 .path-l span{width:44px;text-align:center}
+#app.still *{animation:none!important}
 .err{color:#ff8a8a;font-size:14px;margin-top:10px;line-height:1.6}
 </style>
 </head>
@@ -118,7 +119,9 @@ function dots() {
   return '<div class="dots">' + h + '</div>';
 }
 
-function render() {
+// still = 같은 단계에서 다시 그릴 때(C 이유 칸 열기): 애니메이션·맨 위 이동 없이
+function render(still) {
+  app.classList.toggle('still', !!still);
   if (S.sent || S.step >= 5) return renderEnd();
   if (S.step < 0) return renderIntro();
   var st = S.step;
@@ -147,8 +150,8 @@ function render() {
       '<button class="btn" id="okC">이걸로 선택</button></div>';
   }
   app.innerHTML = h;
-  window.scrollTo(0, 0);
-  if (S.pending === 'C') { var w = document.getElementById('why'); w.focus(); }
+  if (!still) window.scrollTo(0, 0);
+  if (S.pending === 'C') { var w = document.getElementById('why'); w.focus({ preventScroll: true }); w.closest('.reason').scrollIntoView({ block: 'center' }); }
 }
 
 function renderIntro() {
@@ -177,7 +180,7 @@ function renderEnd() {
 // A·B는 누르면 바로 확정. C는 한 줄 이유 칸을 연 뒤 [이걸로 선택](또는 C 다시 누르기)으로 확정
 function pick(k) {
   var st = S.step;
-  if (k === 'C' && S.pending !== 'C') { S.pending = 'C'; save(); render(); return; }
+  if (k === 'C' && S.pending !== 'C') { S.pending = 'C'; save(); render(true); return; }
   if (k === 'C') { var w = document.getElementById('why'); S.reasons[st] = w ? w.value.trim() : ''; }
   else S.reasons[st] = '';
   S.picks[st] = k; S.pending = null; S.step = st + 1; save();
