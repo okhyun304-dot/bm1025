@@ -192,6 +192,8 @@ mark.ban{background:rgba(255,93,108,.25);color:#ffb3ba;border-bottom:2px solid v
   .claims{grid-template-columns:1fr}
   .mybox{padding:16px}
 }
+.hostnote{margin-top:26px;background:var(--panel);border:1px dashed var(--line2);border-radius:6px;padding:16px 20px;color:var(--dim);font-size:16px;line-height:1.7}
+.hostnote b{color:var(--cyan);font-weight:500;word-break:break-all}
 
 </style>
 </head>
@@ -206,7 +208,7 @@ mark.ban{background:rgba(255,93,108,.25);color:#ffb3ba;border-bottom:2px solid v
 /* 공통: 상태 저장, 타이머, QR, 응답 붙여넣기, 운영 화면, 키보드. 각 페이지는 맨 끝에서 setPage({...})로 자기 화면을 등록한다. */
 
 // 구글폼 응답 링크 (_src/설정.json → build.py가 넣음). 설정창(O)에서 바꾸면 그 브라우저에서는 그 값이 우선
-const FORMS = {"q1": "https://forms.gle/V6y4CHsSqmuoboKV9", "ban": "https://forms.gle/HnCNosyLGXsz9WrN8", "mini": "https://forms.gle/CnLskyPxAmTcj5rPA", "post": "https://forms.gle/dbt5EXQKCXaER1bK6", "miniCsv": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFh8CcA1-NiCFMa0bucG_YDS9Q3YUF02ObIAYb1aUpkML7YdJsueJZCKSLToDKDLuNwEfDY3YJF-v0/pub?gid=864911829&single=true&output=csv", "banCsv": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFh8CcA1-NiCFMa0bucG_YDS9Q3YUF02ObIAYb1aUpkML7YdJsueJZCKSLToDKDLuNwEfDY3YJF-v0/pub?gid=2130030714&single=true&output=csv"};
+const FORMS = {"q1": "https://forms.gle/V6y4CHsSqmuoboKV9", "ban": "https://forms.gle/HnCNosyLGXsz9WrN8", "mini": "https://forms.gle/CnLskyPxAmTcj5rPA", "post": "https://forms.gle/dbt5EXQKCXaER1bK6"};
 function formOf(key) { return (S && S.cfg && S.cfg.form) || FORMS[key] || ''; }
 
 /* ---------- utils ---------- */
@@ -502,7 +504,9 @@ document.addEventListener('keydown', e => {
    ① 규칙 장면: 규칙 + A/B 주장 + 내 문장(닉네임·A 다시 쓰기·B 다시 쓰기) → [제출]하면 단어 게임 구글폼으로 자동 제출(응답 시트2).
       쓰는 동안 '안다' 계열 표현을 빨갛게 표시하고 제출을 막는다(폼 검증 규칙과 같은 정규식).
    ② 다시 쓴 문장(진행자 PC): 응답을 자동으로 불러와 카드로 보여주고, 골라서 크게 비교. 해설은 넣지 않는다.
-   시간 조작줄은 PC에서만(폰 숨김). */
+   시간 조작줄은 PC에서만(폰 숨김).
+   같은 원본으로 두 화면을 만든다: word.html(멤버 — 규칙·내 문장만) / word-board.html(대장님 — 규칙 + 다시 쓴 문장). */
+const HOST = false;
 const BAN_FORM = 'https://docs.google.com/forms/d/e/1FAIpQLSerYW853NW3D3GHco0EV4GPptksUGaPZGx6A0nQ-f8XgjTGAw/formResponse';
 const BAN_NICK = 'entry.1950748642', BAN_A = 'entry.1508685694', BAN_B = 'entry.1463269593';
 // 단어 게임 폼의 검증 규칙과 같은 표현 (폼이 거절하는 문장은 화면에서도 막는다)
@@ -574,7 +578,7 @@ async function autoLoad(manual) {
 function reparse() { const t = table(S.raw.ban); S.data.ban = t ? parseBan(t).out : []; save(); render(); }
 document.addEventListener('keydown', e => {
   if (e.target.closest && e.target.closest('input,textarea,select')) return;
-  if (e.ctrlKey || e.metaKey || e.altKey || U.mode === 'rule') return;
+  if (!HOST || e.ctrlKey || e.metaKey || e.altKey || U.mode === 'rule') return;
   if (e.key === 'a' || e.key === 'A' || e.key === 'ㅁ') { if (BAN_CSV) autoLoad(true); else ACT.pasteOpen(); }
 });
 // 붙여넣기 칸에 붙여넣으면 칸을 닫고 '다시 쓴 문장'으로
@@ -617,17 +621,18 @@ setPage({
   fresh: () => ({ raw: { ban: '' }, data: { ban: [] } }),
   ui: { mode: 'rule', filter: 'all', sel: [] },
   parsers: { ban: parseBan },
-  step(d) { const o = ['rule', 'wall', 'compare']; U.mode = o[Math.max(0, Math.min(2, o.indexOf(U.mode) + d))]; if (U.mode !== 'rule') autoLoad(false); },
+  step(d) { if (!HOST) return; const o = ['rule', 'wall', 'compare']; U.mode = o[Math.max(0, Math.min(2, o.indexOf(U.mode) + d))]; if (U.mode !== 'rule') autoLoad(false); },
   view() {
     const c = S.cfg;
+    if (!HOST) U.mode = 'rule';  // 멤버 화면은 규칙·내 문장만
     if (U.mode === 'rule') return `<section class="stage ruleview"><div class="rulemain">
         <div class="kicker">규칙</div><div class="ban-word">안다</div>
         <h1>${esc(c.rule)}</h1>
         <div class="claims">${claim('A', c.claimA)}${claim('B', c.claimB)}</div>
-        ${myBox()}</div>
+        ${HOST ? `<div class="hostnote">멤버는 <b>${esc(location.href.replace(/word-board\.html.*$/, 'word.html'))}</b> 에서 문장을 써서 제출합니다 · 다 쓰면 아래 [다시 쓴 문장 보기 →]</div>` : myBox()}</div>
       <aside class="side pconly">${timerBox('ban', c.minutes)}</aside></section>
       ${ctrl(`<button class="b pri" data-act="tToggle" data-n="ban">시간 시작/정지 (T)</button><button class="b" data-act="tReset" data-n="ban" data-m="${c.minutes}">시간 리셋</button><button class="b" data-act="tAdd" data-n="ban">+1분</button>
-        <button class="b pri" data-act="mode" data-m="wall">다시 쓴 문장 보기 →</button>`)}`;
+        ${HOST ? '<button class="b pri" data-act="mode" data-m="wall">다시 쓴 문장 보기 →</button>' : ''}`)}`;
     const all = S.data.ban;
     const card = (r, big) => `<div class="bcard ${!big && U.sel.includes(r.id) ? 'sel' : ''}" ${big ? '' : `data-act="sel" data-id="${r.id}"`}>
         <div class="who"><span>${esc(r.nick || '(닉네임 없음)')}</span>${!big && U.sel.includes(r.id) ? '<span class="picked">선택됨</span>' : ''}</div>
@@ -653,8 +658,7 @@ setPage({
       ${fld('rule', '규칙', { ta: 2 })}${fld('claimA', 'A 핵심 주장', { ta: 2 })}${fld('claimB', 'B 핵심 주장', { ta: 2 })}${fld('minutes', '타이머(분)')}</div></div>${backupBox()}`]
   ]
 });
-autoLoad(false);
-setInterval(() => { if (U.mode !== 'rule') autoLoad(false); }, 15000);
+if (HOST) { autoLoad(false); setInterval(() => { if (U.mode !== 'rule') autoLoad(false); }, 15000); }
 
 </script>
 </body>
