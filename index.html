@@ -118,7 +118,7 @@ label.file input{display:none}
 }
 
 /* 디트로이트: 비컴 휴먼 인게임 화면 느낌 — 어두운 비 오는 장면, 캡션 박스, 오른쪽 버튼 글자, 줄어드는 시간 막대.
-   화면 순서: ① A/B 핵심 주장 ② 원문 댓글(익명화) ③ 원본 쇼츠 링크 ④ 질문·제출 */
+   화면 순서: ① 질문·제출 ② 원본 쇼츠 링크 ③ A/B 핵심 주장 ④ 원문 댓글(익명화) */
 main{padding:0!important}
 .scene{min-height:100vh;color:#f2f4f6;background:radial-gradient(ellipse at 70% 30%,#2a3846 0%,#121b24 45%,#05080c 100%) fixed,#05080c;position:relative}
 .rain{position:fixed;inset:-200px;pointer-events:none;z-index:0;
@@ -156,17 +156,22 @@ body.present .wrap{padding-bottom:40px}
 
 /* ② 원문 댓글 */
 .evid{background:rgba(8,11,14,.72);border-top:2px solid #1f8bff;padding:18px 22px}
-.evid .hd{font-size:13px;color:#9fb3c6;margin-bottom:14px;line-height:1.6}
-.yc{display:flex;gap:12px;margin-bottom:16px}
+.evid .hd{font-size:15px;color:#b8c7d4;margin-bottom:16px;line-height:1.6}
+/* 댓글 카드: 작성자별 왼쪽 색 띠 (A 파랑 · B 노랑 · 익명 회색 — A/B 주장 칸과 같은 색) */
+.yc{display:flex;gap:14px;margin-bottom:12px;padding:14px 18px;background:rgba(255,255,255,.055);border-left:4px solid #6b7785}
 .yc:last-child{margin-bottom:0}
-.yc.reply{margin-left:42px}
-.yav{flex:0 0 34px;height:34px;border-radius:50%;background:#2a3a4a;border:1px solid #1f8bff;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px}
-.yav.익명{font-size:11px;border-color:#556}
-.yh{color:#9fb3c6;font-size:13px}
+.yc.reply{margin-left:36px}
+.yc>div:last-child{flex:1;min-width:0}
+.yc.wA{border-left-color:#4aa8ff}.yc.wB{border-left-color:#ffd23f}
+.yav{flex:0 0 38px;height:38px;border-radius:50%;background:#3a4654;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:17px}
+.yav.A{background:#4aa8ff;color:#04121f}.yav.B{background:#ffd23f;color:#1f1700}
+.yav.익명{font-size:12px}
+.yh{color:#b8c7d4;font-size:15px}
 .yh b{color:#fff;margin-right:8px}
-.yh .ex{color:#58a8ff;font-size:12px;letter-spacing:.06em}
-.yc p{margin:4px 0 0;font-size:clamp(15px,1.35vw,19px);line-height:1.7;color:#e6ecf1;white-space:pre-wrap}
-.men{color:#58a8ff}
+.yc.wA .yh b{color:#7cc0ff}.yc.wB .yh b{color:#ffe07a}
+.yh .ex{color:#58a8ff;font-size:13px;letter-spacing:.06em}
+.yc p{margin:6px 0 0;font-size:clamp(17px,1.6vw,22px);line-height:1.75;color:#f4f7fa;white-space:pre-wrap;overflow-wrap:anywhere}
+.men{color:#7cc0ff;font-weight:700}
 
 /* ③ 링크 */
 .src{background:rgba(8,11,14,.72);padding:14px 22px;font-size:16px;color:#9fb3c6}
@@ -503,7 +508,7 @@ document.addEventListener('keydown', e => {
 function comments() {
   return (S.cfg.comments || []).map(c => {
     const anon = /^익명/.test(c.who);
-    return `<div class="yc ${c.reply ? 'reply' : ''}"><div class="yav ${anon ? '익명' : esc(c.who)}">${anon ? '익명' : esc(c.who)}</div><div>
+    return `<div class="yc ${c.reply ? 'reply' : ''} ${anon ? 'w익명' : 'w' + esc(c.who)}"><div class="yav ${anon ? '익명' : esc(c.who)}">${anon ? '익명' : esc(c.who)}</div><div>
       <div class="yh"><b>${anon ? esc(c.who) : '@' + esc(c.who)}</b>${c.ex ? `<span class="ex">${esc(c.ex)}</span>` : ''}</div>
       <p>${esc(c.text).replace(/^(@(?:A|B|익명\d+))/, '<span class="men">$1</span>')}</p></div></div>`;
   }).join('');
