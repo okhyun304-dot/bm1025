@@ -213,6 +213,8 @@ main{padding:0!important}
 .rmat td.diag{background:rgba(23,101,196,.15);color:#1765c4;font-weight:700}
 .dfoot{position:absolute;right:60px;top:852px;display:flex;gap:26px;align-items:center;font-size:14px;color:#2b2b2b}
 .dfoot span{display:flex;align-items:center;gap:8px}
+.dfoot .cutnote{color:#1a5fb4;font-weight:700}
+.dfoot .lnk{color:#0a58ca;text-decoration:underline;cursor:pointer;font-weight:500}
 .key{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 5px;background:#2f3338;border-radius:3px;font-weight:900;font-size:14px}
 .key.y{color:#ffd23f}.key.x{color:#4aa8ff}.key.a{color:#8fd14f}.key.b{color:#ff6b4a}
 
@@ -539,14 +541,22 @@ document.addEventListener('keydown', e => {
 
 /* 4. 선택형 미니게임 — 공유 화면(대장님): 플로차트 결과만. 멤버는 각자 play.html 게임에서 선택(구글폼으로 자동 제출).
    정보 문장에는 강조를 넣지 않는다(판단 유도 방지). 해석은 넣지 않는다 */
+// 구글 시트 타임스탬프 "2026. 10. 25 오전 2:38:43" → ms (못 읽으면 0)
+function tsMs(v) {
+  const m = String(v || '').match(/(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\s*(오전|오후)?\s*(\d{1,2}):(\d{2}):(\d{2})/);
+  if (!m) return 0;
+  let h = +m[5]; if (m[4] === '오후' && h < 12) h += 12; if (m[4] === '오전' && h === 12) h = 0;
+  return new Date(+m[1], +m[2] - 1, +m[3], h, +m[6], +m[7]).getTime();
+}
 function parseMini(t) {
-  const ni = nickIdx(t.h);
+  const ni = nickIdx(t.h), ti = t.h.findIndex(isTs);
+  const cut = (U && U.cut) || 0;  // [새로 세기]를 누른 시각 — 그 전에 낸 응답(테스트 등)은 세지 않는다
   const map = []; let cur = -1;
   t.h.forEach((x, i) => {
     if (/판단/.test(x) && !/이유/.test(x)) { const m = x.match(/정보\s*(\d)/); cur = m ? +m[1] : 0; map.push({ i, step: cur, kind: 'c' }); }
     else if (/이유/.test(x) && cur >= 0) map.push({ i, step: cur, kind: 'r' });
   });
-  const out = dedupe(t.rows.map(r => {
+  const out = dedupe(t.rows.filter(r => !cut || ti < 0 || tsMs(r[ti]) >= cut).map(r => {
     const steps = [0, 1, 2, 3, 4].map(() => ({ c: '', r: '' }));
     map.forEach(m => { const v = (r[m.i] || '').trim(); if (m.step > 4) return;
       if (m.kind === 'c') steps[m.step].c = (v.match(/^[ABC]/) || [''])[0]; else steps[m.step].r = v; });
@@ -640,15 +650,19 @@ function result() {
     <svg class="lines" viewBox="0 0 1600 900">${lines}</svg>${nodes}
     <div class="rstats"><div class="rstat"><b>${s.kept}</b><span>처음 = 마지막</span></div><div class="rstat"><b>${s.changed}</b><span>처음 ≠ 마지막</span></div><div class="rstat"><b>${s.wavered}</b><span>중간에 한 번 이상 바꿈</span></div></div>
     ${mat}${empty}
-    <div class="dfoot"><span data-act="paths" style="cursor:pointer"><b class="key a">경로</b>사람별 경로</span></div>
+    <div class="dfoot">${U.cut ? `<span class="cutnote">${new Date(U.cut).toTimeString().slice(0, 5)} 이후 제출만 집계 <b class="lnk" data-act="showAll">전체 보기</b></span>` : ''}<span data-act="resetCount" style="cursor:pointer"><b class="key b">↺</b>새로 세기</span><span data-act="paths" style="cursor:pointer"><b class="key a">경로</b>사람별 경로</span></div>
   </div></div>`;
 }
 function pathsModal() {
   openModal(`<h2>사람별 경로</h2><p class="desc">파랑 = 직전과 같음 · 주황 = 직전과 다름</p><div class="paths">${S.data.mini.map((r, i) => `<div class="path"><span class="nm">${who(r.nick, i)}</span><span class="chips">${r.steps.map((x, j) => `<i class="${!x.c ? 'no' : j && r.steps[j - 1].c && x.c !== r.steps[j - 1].c ? 'ch' : ''}">${x.c || '·'}</i>`).join('')}</span></div>`).join('') || '<p class="desc">불러온 응답이 없습니다.</p>'}</div>
     <div class="modal-btns"><button class="b" data-act="anonPaths">${U.anon ? '이름 표시' : '이름 숨김'}</button><button class="b pri" data-act="closeModal">닫기 (Esc)</button></div>`);
 }
+function reparse() { const t = table(S.raw.mini); S.data.mini = t ? parseMini(t).out : []; save(); render(); }
 Object.assign(ACT, {
   paths: pathsModal,
+  // 새로 세기: 지금 이후에 제출된 것만 센다 (시트 자체는 그대로 — 테스트 응답 정리는 나중에 한 번에)
+  resetCount: () => { if (!confirm('지금부터 새로 셀까요? 지금까지의 응답(테스트 등)은 화면에서 빠집니다. 시트에는 그대로 남습니다.')) return; U.cut = Date.now(); saveU(); reparse(); },
+  showAll: () => { U.cut = 0; saveU(); reparse(); },
   anonPaths: () => { U.anon = !U.anon; saveU(); pathsModal(); }
 });
 
