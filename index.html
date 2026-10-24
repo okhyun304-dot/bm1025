@@ -203,7 +203,7 @@ body.present .wrap{padding-bottom:40px}
 .cmrow{display:grid;grid-template-columns:80px 90px 1fr 1fr auto;gap:8px;align-items:start;margin-top:8px}
 @media (max-width:760px){
   /* 폰(멤버): 시간 조작줄·타이머 숨김 — 시간은 진행자 화면 공유로 */
-  .ctrl,.clock .bar,.clock .timer{display:none}
+  .ctrl,.clock .bar,.clock .timer,.clock .tl{display:none}
   .clock{padding:8px 14px}
   .qbox{padding:16px 16px}.answer{padding:16px}
   .wrap{padding:20px 14px 100px}
@@ -627,7 +627,7 @@ setPage({
     const c = S.cfg;
     timer('q', c.minutes);
     return `<div class="scene"><div class="rain"></div>
-      <div class="clock"><div class="tag">10.25 질문 · 남은 시간</div><div class="bar"><i data-timerbar="q"></i></div><div class="timer" data-timer="q">${fmt(T.q.left)}</div></div>
+      <div class="clock"><div class="tag">10.25 질문<span class="tl"> · 남은 시간</span></div><div class="bar"><i data-timerbar="q"></i></div><div class="timer" data-timer="q">${fmt(T.q.left)}</div></div>
       <div class="wrap">
         <div class="sec">${sh(1, '질문')}
           <div class="qbox"><div class="q">${esc(c.question)}</div><div class="dm">맨 아래 <b>⑤ 내 답변</b>에 답을 쓰고 [제출]을 눌러 주세요<small>다른 멤버의 답변은 보이지 않습니다</small></div></div></div>
