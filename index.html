@@ -8,7 +8,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
   --bg:#08121c; --panel:#0f1d2b; --panel2:#132638; --line:#264660; --line2:#2f5677;
@@ -118,7 +117,7 @@ label.file input{display:none}
 }
 
 /* 디트로이트: 비컴 휴먼 인게임 화면 느낌 — 어두운 비 오는 장면, 캡션 박스, 오른쪽 버튼 글자, 줄어드는 시간 막대.
-   화면 순서: ① 질문·제출 ② 원본 쇼츠 링크 ③ A/B 핵심 주장 ④ 원문 댓글(익명화) */
+   화면 순서: ① 질문 ② 원본 쇼츠 링크 ③ A/B 핵심 주장 ④ 원문 댓글(익명화) ⑤ 내 답변(닉네임·답변·제출). 멤버·진행자 같은 화면 */
 main{padding:0!important}
 .scene{min-height:100vh;color:#f2f4f6;background:radial-gradient(ellipse at 70% 30%,#2a3846 0%,#121b24 45%,#05080c 100%) fixed,#05080c;position:relative}
 .rain{position:fixed;inset:-200px;pointer-events:none;z-index:0;
@@ -178,19 +177,35 @@ body.present .wrap{padding-bottom:40px}
 .src a{color:#58a8ff;word-break:break-all}
 
 /* ④ 질문 */
-.qbox{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:22px;align-items:center;background:rgba(8,11,14,.85);border-left:4px solid #1f8bff;padding:22px 26px}
+.qbox{background:rgba(8,11,14,.85);border-left:4px solid #1f8bff;padding:22px 26px}
 .qbox .q{font-size:clamp(20px,2.3vw,30px);line-height:1.55}
 .qbox .dm{margin-top:18px;padding:14px 18px;border:1px solid #2f5677;background:rgba(31,139,255,.08);font-size:clamp(18px,1.9vw,24px);line-height:1.5}
-.qbox .dm span{display:block;font-size:12px;letter-spacing:.2em;color:#58a8ff;font-weight:700;margin-bottom:4px}
 .qbox .dm small{display:block;font-size:14px;color:#9fb3c6;margin-top:6px}
 .qrhud{background:#fff;padding:10px;text-align:center;color:#111;font-size:13px;font-weight:700}
 .qrhud .qr img,.qrhud .qr canvas{width:150px!important;height:150px!important}
 .qrhud a{display:block;color:#0a58ca;font-weight:400;font-size:11px;word-break:break-all;margin-top:4px}
 .qrhud.empty{background:rgba(8,11,14,.78);color:#9fb3c6;font-weight:400;padding:14px;border:1px dashed #2f5677}
 
+/* ⑤ 내 답변 */
+.answer{background:rgba(8,11,14,.9);border:1px solid #2f5677;padding:22px 24px}
+.answer h2{margin:0 0 4px;font-size:20px;font-weight:700}
+.answer .note{font-size:14px;color:#9fb3c6;margin:0 0 14px;line-height:1.6}
+.answer label{display:block;font-size:15px;color:#9fb3c6;margin:14px 0 6px}
+.answer input,.answer textarea{width:100%;font-size:18px;padding:12px 14px;background:#0b1117;color:#fff;border:1px solid #3f6a8f;border-radius:0}
+.answer textarea{min-height:200px;line-height:1.65}
+.answer .cnt{text-align:right;font-size:14px;color:#9fb3c6;margin-top:6px;font-variant-numeric:tabular-nums}
+.answer .cnt.ok{color:#7fd38a}
+.answer .send{display:block;width:100%;margin-top:14px;padding:14px;font-size:18px;border-radius:0}
+.answer .send:disabled{opacity:.4;cursor:default}
+.answer .err{color:#ff8a8a;font-size:14px;margin-top:10px}
+.answer.done h2{font-weight:300;font-size:26px}
+.answer .mine{margin-top:10px;background:#0b1117;border-left:3px solid #1f8bff;padding:14px 16px;font-size:16px;line-height:1.7;white-space:pre-wrap}
 .cmrow{display:grid;grid-template-columns:80px 90px 1fr 1fr auto;gap:8px;align-items:start;margin-top:8px}
 @media (max-width:760px){
-  .clock{padding:8px 14px}.clock .timer{font-size:30px}.clock .bar{width:90px}
+  /* 폰(멤버): 시간 조작줄·타이머 숨김 — 시간은 진행자 화면 공유로 */
+  .ctrl,.clock .bar,.clock .timer{display:none}
+  .clock{padding:8px 14px}
+  .qbox{padding:16px 16px}.answer{padding:16px}
   .wrap{padding:20px 14px 100px}
   .qbox{grid-template-columns:1fr}
   .yc.reply{margin-left:18px}
@@ -502,8 +517,9 @@ document.addEventListener('keydown', e => {
   else if (k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); PAGE.step(-1); render(); }
 });
 
-/* 1. 기습질문 — 순서: ① A/B 핵심 주장 ② 원문 댓글(익명화, 문장은 원문 그대로) ③ 원본 쇼츠 링크 ④ 질문·제출 안내.
-   답변은 구글폼(QR·링크)으로 받는다. 폼 링크는 _src/설정.json → build.py가 넣는다. 5분 타이머는 화면 표시용.
+/* 1. 기습질문 — 멤버와 진행자가 같은 화면(메인 주소)을 쓴다. 순서: ① 질문 ② 원본 쇼츠 링크 ③ A/B 핵심 주장 ④ 원문 댓글 ⑤ 내 답변.
+   ⑤에서 닉네임·답변을 쓰고 [제출]하면 기습질문 구글폼으로 자동 제출(응답 시트1, 공개 안 됨). 멤버는 구글폼을 보지 않는다.
+   시간 조작(시작/정지·리셋·+1분)은 PC 화면 아래 조작줄에만 보이고 폰에서는 숨긴다. 5분 타이머는 화면 표시용.
    다른 결과물의 내용은 이 파일에 넣지 않는다. A/B 버튼 색은 맞고 틀림을 연상시키지 않게 파랑·노랑. */
 function comments() {
   return (S.cfg.comments || []).map(c => {
@@ -514,14 +530,37 @@ function comments() {
   }).join('');
 }
 const sh = (n, t) => `<div class="sh"><span class="n">${n}</span><b>${t}</b></div>`;
-// QR·링크는 멤버용 답변 화면(answer.html)으로 — 거기서 쓰고 제출하면 구글폼으로 자동 제출된다
-const ANSWER_URL = /^https?:$/.test(location.protocol) ? new URL('answer.html', location.href).href : 'https://okhyun304-dot.github.io/bm1025/answer.html';
-const qrHud = url => url ? `<div class="qrhud"><div class="qr" data-url="${esc(url)}"></div>답변 제출<a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a></div>`
-  : '<div class="qrhud empty">제출 폼 링크 미설정<br><kbd>O</kbd> 설정 또는 _src/설정.json</div>';
+// ⑤ 내 답변 — 구글폼으로 자동 제출. 항목 번호는 폼 화면에서 읽은 값 (폼을 다시 만들면 바꿔야 함)
+const Q1_FORM = 'https://docs.google.com/forms/d/e/1FAIpQLScYSiAvurbdHX6UCUKY0XKbhfrsUhmaxdcZ2k4OWSM2b-MwHQ/formResponse';
+const Q1_NICK = 'entry.1315681151', Q1_ANSWER = 'entry.1564208429';
+const AKEY = 'bm1025_answer';
+let A = (() => { try { const a = JSON.parse(localStorage.getItem(AKEY)); if (a && a.v === 1) return a; } catch (e) {} return { v: 1, nick: '', text: '', sent: false }; })();
+const asave = () => { try { localStorage.setItem(AKEY, JSON.stringify(A)); } catch (e) {} };
+function answerBox() {
+  if (A.sent) return `<div class="answer done"><h2>제출되었습니다</h2><p class="note">${esc(A.nick)}님의 답변이 기록되었습니다. 진행자의 안내를 기다려 주세요.</p><div class="mine">${esc(A.text)}</div></div>`;
+  return `<div class="answer"><h2>내 답변</h2><p class="note">제출한 답변은 진행자만 봅니다. 다른 멤버의 답변은 보이지 않습니다. 제출한 뒤에는 고칠 수 없습니다.</p>
+    <label for="nick">닉네임 (텔레그램 닉네임 그대로)</label><input type="text" id="nick" maxlength="40" autocomplete="off" value="${esc(A.nick)}">
+    <label for="ans">답변</label><textarea id="ans">${esc(A.text)}</textarea><div class="cnt" id="cnt">${cntText()}</div>
+    <button class="b pri send" id="send" data-act="sendAns" ${A.nick.trim() && A.text.trim() ? '' : 'disabled'}>제출</button><div class="err" id="aerr" hidden></div></div>`;
+}
+function cntText() { return A.text.length + '자 (200~400자)'; }
+document.addEventListener('input', e => {
+  if (e.target.id !== 'nick' && e.target.id !== 'ans') return;
+  A[e.target.id === 'nick' ? 'nick' : 'text'] = e.target.value; asave();
+  const c = $('#cnt'); if (c) { c.textContent = cntText(); c.classList.toggle('ok', A.text.length >= 200 && A.text.length <= 400); }
+  const b = $('#send'); if (b) b.disabled = !A.nick.trim() || !A.text.trim();
+});
 
 Object.assign(ACT, {
-  open: () => { U.open = true; render(); },
-  close: () => { U.open = false; render(); },
+  sendAns: b => {
+    const nick = A.nick.trim(), text = A.text.trim();
+    if (!nick || !text || !confirm('제출할까요? 제출한 뒤에는 고칠 수 없습니다.')) return;
+    b.disabled = true; b.textContent = '제출 중…';
+    const p = new URLSearchParams(); p.append(Q1_NICK, nick); p.append(Q1_ANSWER, text);
+    fetch(Q1_FORM, { method: 'POST', mode: 'no-cors', body: p })
+      .then(() => { A.nick = nick; A.text = text; A.sent = true; asave(); render(); })
+      .catch(() => { b.disabled = false; b.textContent = '다시 제출'; const e = $('#aerr'); e.hidden = false; e.textContent = '제출하지 못했습니다. 인터넷 연결을 확인하고 다시 눌러주세요. (쓴 답변은 그대로 남아 있습니다)'; });
+  },
   addCm: () => { S.cfg.comments.push({ who: 'A', reply: true, ex: '', text: '' }); save(); render(); },
   delCm: b => { S.cfg.comments.splice(+b.dataset.i, 1); save(); render(); }
 });
@@ -531,7 +570,6 @@ setPage({
   timer: 'q',
   cfg: {
     form: '',
-    submit: 'QR을 찍거나 링크를 눌러 답변을 제출해 주세요',
     shortsUrl: 'https://youtube.com/shorts/EtOnMXbcTIU',
     question: '두 사람의 주장을 읽어보세요. 여러분은 어느 쪽이 더 타당하다고 생각하나요? 그렇게 판단한 이유를 200~400자로 적어보세요. 시간은 5분입니다.',
     claimA: '그건 안다고 하는게 아닙니다. 지행합일. 앎은 행함의 시작이고, 행함은 앎의 완성이다.',
@@ -582,18 +620,16 @@ setPage({
     minutes: 5
   },
   fresh: () => ({}),
-  ui: { open: false },
-  step(d) { U.open = d > 0; },
+  ui: {},
+  step() {},
   view() {
     const c = S.cfg;
     timer('q', c.minutes);
-    if (!U.open) return `<div class="chapter"><small>10 · 25</small><div class="ln"></div><h1>잠시 후 공개합니다</h1></div>
-      ${ctrl(`<button class="b pri" data-act="open">공개 (→)</button>`)}`;
     return `<div class="scene"><div class="rain"></div>
       <div class="clock"><div class="tag">10.25 질문 · 남은 시간</div><div class="bar"><i data-timerbar="q"></i></div><div class="timer" data-timer="q">${fmt(T.q.left)}</div></div>
       <div class="wrap">
         <div class="sec">${sh(1, '질문')}
-          <div class="qbox"><div><div class="q">${esc(c.question)}</div><div class="dm"><span>제출</span>${esc(c.submit)}<small>다른 멤버의 답변은 보이지 않습니다</small></div></div>${qrHud(ANSWER_URL)}</div></div>
+          <div class="qbox"><div class="q">${esc(c.question)}</div><div class="dm">맨 아래 <b>⑤ 내 답변</b>에 답을 쓰고 [제출]을 눌러 주세요<small>다른 멤버의 답변은 보이지 않습니다</small></div></div></div>
         <div class="sec">${sh(2, '원본 영상')}
           <div class="src"><a href="${esc(c.shortsUrl)}" target="_blank" rel="noopener">${esc(c.shortsUrl)}</a></div></div>
         <div class="sec">${sh(3, 'A / B 핵심 주장')}
@@ -601,15 +637,15 @@ setPage({
           <div class="ch"><span class="ct">${esc(c.claimB)}</span><span class="ck B">B</span></div></div>
         <div class="sec">${sh(4, '원문 댓글')}
           <div class="evid"><div class="hd">유튜브 댓글 중 원 댓글과 A·B가 주고받은 댓글을 원문 그대로 실었습니다. 작성자 이름만 A·B로 바꾸고 좋아요 수는 가렸습니다.</div>${comments()}</div></div>
+        <div class="sec">${sh(5, '내 답변')}${answerBox()}</div>
       </div></div>
-      ${ctrl(`<button class="b" data-act="close">가리기 (←)</button><button class="b pri" data-act="tToggle" data-n="q">시간 시작/정지 (T)</button>
+      ${ctrl(`<button class="b pri" data-act="tToggle" data-n="q">시간 시작/정지 (T)</button>
         <button class="b" data-act="tReset" data-n="q" data-m="${c.minutes}">시간 리셋</button><button class="b" data-act="tAdd" data-n="q">+1분</button>`)}`;
   },
   opsTabs: [['cfg', '설정', () => {
     const c = S.cfg;
     return `<div class="box"><h3>폼 링크 · 문구</h3><div class="fgrid">
         ${fld('form', '구글폼 응답 링크', { help: '비워두면 _src/설정.json의 링크를 씀 (구글폼_만들기.gs 실행 로그의 [1 질문])' })}
-        ${fld('submit', '제출 안내 문구', { help: '질문 아래에 크게 표시됩니다' })}
         ${fld('question', '질문', { ta: 3 })}${fld('claimA', 'A 핵심 주장', { ta: 2 })}${fld('claimB', 'B 핵심 주장', { ta: 2 })}
         ${fld('shortsUrl', '원본 영상 링크')}${fld('minutes', '타이머(분)')}</div></div>
       <div class="box"><h3>원문 댓글</h3><p class="help">문장은 원문 그대로 두세요. 맨 앞 @A·@B는 파란 멘션으로 보입니다.</p>
