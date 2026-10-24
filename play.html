@@ -96,6 +96,13 @@ input[type=text]:focus{border-color:var(--cyan)}
 .reveal .slots{margin:22px 0 4px}
 body.revealing .figure{opacity:.07}
 .rgo{max-width:440px;margin-top:22px;animation:fadein .4s ease-out .7s both}
+/* 장면 그림 */
+.iimg{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;margin:10px 0 -6px;border:1px solid #23313e}
+.cap.sit{display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:center}
+.simg{width:110px;aspect-ratio:4/3;object-fit:cover;display:block}
+.cimg{display:block;width:calc(100% + 24px);margin:-10px -12px 8px;aspect-ratio:16/9;object-fit:cover}
+.card.new .cimg{outline:1px solid var(--cyan)}
+.rimg{display:block;width:calc(100% + 40px);margin:-22px -20px 16px;aspect-ratio:4/3;object-fit:cover}
 /* 내 선택 플로차트 */
 .flow{margin:22px 0 4px;background:#d2d2d2;background-image:linear-gradient(120deg,rgba(255,255,255,.18) 0 30%,transparent 30% 60%,rgba(0,0,0,.04) 60%);padding:14px 10px 6px;text-align:left}
 .flh{font-size:13px;letter-spacing:.14em;color:#1d4f91;font-weight:700;margin:0 4px 4px}
@@ -156,6 +163,8 @@ var G = {
   ]
 };
 
+// 장면 그림: 0 = 상황, 1~4 = 정보 1~4 (_src/img, 구글 Flow 생성 — 판단을 유도하지 않게 담담한 톤)
+var IMG = ['img/0.jpg', 'img/1.jpg', 'img/2.jpg', 'img/3.jpg', 'img/4.jpg'];
 var KEY = 'bm1025_play';
 // 테스트용: 주소 끝에 ?reset 을 붙이면 이 기기의 기록을 지우고 처음부터 (멤버에게는 알리지 않음)
 if (/[?&]reset/.test(location.search)) { try { localStorage.removeItem(KEY); } catch (e) {} history.replaceState(null, '', location.pathname); }
@@ -184,7 +193,7 @@ function slots(n) {
 function renderReveal() {
   var st = S.step;
   app.innerHTML = '<div class="reveal"><div class="rk">새로운 정보</div><div class="rn">' + st + ' <span>/ 4</span></div>' +
-    '<div class="rcard"><div class="rcl">정보 ' + st + '</div><div class="rct">' + esc(G.infos[st - 1]) + '</div></div>' +
+    '<div class="rcard"><img class="rimg" src="' + IMG[st] + '" alt=""><div class="rcl">정보 ' + st + '</div><div class="rct">' + esc(G.infos[st - 1]) + '</div></div>' +
     slots(st) + '<button class="btn rgo" id="go">판단하기 →</button></div>';
   window.scrollTo(0, 0);
   document.getElementById('go').addEventListener('click', function () { S.reveal = false; save(); render(); });
@@ -198,10 +207,10 @@ function render(still) {
   if (S.reveal && S.step > 0) return renderReveal();
   var st = S.step;
   var h = '<div class="top"><span>정보 <b>' + st + '/4</b></span>' + slots(st) + '</div>';
-  h += '<div class="cap sit"><span class="tag">상황</span>' + esc(G.situation) + '</div>';
+  h += '<div class="cap sit"><img class="simg" src="' + IMG[0] + '" alt=""><div><span class="tag">상황</span>' + esc(G.situation) + '</div></div>';
   h += '<div class="board">';
   for (var i = 0; i < 4; i++) {
-    if (i < st) h += '<div class="card' + (i === st - 1 ? ' new' : '') + '"><div class="cl">정보 ' + (i + 1) + (i === st - 1 ? '<b>NEW</b>' : '') + '</div><div class="ct">' + esc(G.infos[i]) + '</div></div>';
+    if (i < st) h += '<div class="card' + (i === st - 1 ? ' new' : '') + '"><img class="cimg" src="' + IMG[i + 1] + '" alt=""><div class="cl">정보 ' + (i + 1) + (i === st - 1 ? '<b>NEW</b>' : '') + '</div><div class="ct">' + esc(G.infos[i]) + '</div></div>';
     else h += '<div class="card lock"><div class="cl">정보 ' + (i + 1) + '</div><div class="cq">?</div></div>';
   }
   h += '</div>';
@@ -224,7 +233,7 @@ function render(still) {
 }
 
 function renderIntro() {
-  app.innerHTML = '<div class="intro"><h1>선택 게임</h1><div class="ln"></div>' +
+  app.innerHTML = '<div class="intro"><img class="iimg" src="' + IMG[0] + '" alt=""><h1>선택 게임</h1><div class="ln"></div>' +
     '<p>한 학생의 선택에 대한 짧은 게임입니다.<br>처음에 하나를 고르고, 정보가 하나씩 공개될 때마다 판단을 다시 고릅니다.<br>앞으로 돌아갈 수는 없습니다.</p>' +
     '<label class="pr" for="nick">닉네임<small>텔레그램 닉네임 그대로 적어주세요</small></label>' +
     '<input type="text" id="nick" maxlength="40" autocomplete="off" value="' + esc(S.nick) + '">' +
