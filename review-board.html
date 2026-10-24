@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>다시 보기 · 비교</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08121c; --panel:#0f1d2b; --panel2:#132638; --line:#264660; --line2:#2f5677;
+  --text:#e8f1f8; --dim:#8aa3b8; --cyan:#46d2ff; --cyan2:#1c9fd1;
+  --warn:#ffb547; --red:#ff5d6c; --ok:#5ee2a0;
+}
+*{box-sizing:border-box}
+html,body{margin:0;color:var(--text);font-family:'Noto Sans KR','Pretendard','Malgun Gothic',sans-serif}
+body{word-break:keep-all;overflow-wrap:anywhere;min-height:100vh;background:radial-gradient(ellipse at 50% -20%,#12304a 0%,var(--bg) 60%) fixed,var(--bg)}
+a{color:var(--cyan)}
+button{font:inherit;cursor:pointer}
+input,textarea,select{font:inherit;color:var(--text);background:#0a1724;border:1px solid var(--line);border-radius:4px;padding:8px 10px;width:100%}
+textarea{resize:vertical;line-height:1.55}
+h1,h2,h3{margin:0}
+main{padding:28px clamp(16px,3vw,48px) 96px}
+body.present main{padding-bottom:24px}
+.stage{min-height:calc(100vh - 130px)}
+body.present .stage{min-height:calc(100vh - 52px)}
+.kicker{letter-spacing:.22em;color:var(--cyan);font-size:13px;font-weight:700}
+#menuPeek{display:none;position:fixed;top:6px;right:8px;z-index:30;background:rgba(15,29,43,.8);color:var(--dim);border:1px solid var(--line);border-radius:4px;padding:4px 10px;opacity:0;transition:opacity .2s}
+body.present #menuPeek{display:block}
+#menuPeek:hover{opacity:1}
+
+/* control bar */
+.ctrl{position:fixed;left:0;right:0;bottom:0;display:flex;gap:18px;align-items:center;padding:10px 18px;background:rgba(10,20,30,.97);border-top:1px solid var(--line);flex-wrap:wrap;z-index:15}
+body.present .ctrl{display:none}
+.ctrl .acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ctrl .hint{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-left:auto;padding-left:18px;border-left:1px solid var(--line)}
+.ctrl .key{display:inline-flex;gap:4px;align-items:center}
+.ctrl .key em{font-style:normal;font-size:14px;color:#c9d6e2;margin-left:4px}
+.ctrl kbd{min-width:24px;text-align:center;padding:2px 7px;font-size:13px;font-weight:700;background:#1d3247;border-color:#3f6a8f;color:#fff}
+.b{background:var(--panel2);border:1px solid var(--line2);color:var(--text);padding:7px 14px;border-radius:4px;font-size:14px}
+.b:hover{border-color:var(--cyan2)}
+.b.pri{background:var(--cyan2);border-color:var(--cyan);color:#001a26;font-weight:700}
+.b.on{border-color:var(--cyan);color:var(--cyan)}
+.b.danger{border-color:#6b2a33;color:#ff9aa4}
+.b.sm{padding:4px 10px;font-size:13px}
+kbd{background:var(--panel2);border:1px solid var(--line2);border-radius:3px;padding:1px 6px;font-family:inherit;font-size:12px;color:var(--text)}
+
+/* timer & qr */
+.timerbox{text-align:center}
+.timer{font-size:clamp(56px,6vw,84px);font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:.02em;line-height:1.1}
+.timer.warn{color:var(--warn)}
+.timer.done{color:var(--red)}
+.tbtns{display:flex;gap:6px;justify-content:center;margin-top:6px}
+body.present .tbtns{display:none}
+.qrbox{background:#fff;color:#111;padding:14px;border-radius:8px;text-align:center}
+.qrbox .qr{display:flex;justify-content:center;min-height:40px}
+.qrbox .qr img,.qrbox .qr canvas{display:block}
+.qrlabel{font-weight:700;margin-top:8px}
+.qrurl{display:block;color:#0a58ca;font-size:13px;word-break:break-all;margin-top:4px}
+.qrbox.empty{background:var(--panel);color:var(--dim);border:1px dashed var(--line2)}
+.qrbox.qsmall .qr img,.qrbox.qsmall .qr canvas{width:120px!important;height:120px!important}
+.side{display:flex;flex-direction:column;gap:16px;position:sticky;top:20px}
+.note{font-size:13px;color:var(--dim);text-align:center}
+.src{font-size:13px;color:var(--dim);word-break:break-all}
+
+/* shared blocks */
+.two{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:32px;align-items:start}
+.claims{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.claim{border:1px solid var(--line2);background:linear-gradient(180deg,#132a40,#0c1b2a);padding:18px 22px;border-radius:6px}
+.claim .who{font-size:30px;font-weight:900;color:var(--cyan)}
+.claim p{font-size:clamp(18px,1.6vw,24px);line-height:1.6;margin:6px 0 0}
+.stats{display:flex;gap:14px;flex-wrap:wrap}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 18px;min-width:130px}
+.stat b{display:block;font-size:34px;font-weight:900}
+.stat span{color:var(--dim);font-size:13px}
+.help{color:var(--dim);font-size:13px;margin:4px 0 10px;line-height:1.6}
+
+/* modal */
+#modal{position:fixed;inset:0;background:rgba(2,8,14,.86);z-index:40;display:flex;align-items:center;justify-content:center;padding:24px}
+#modal[hidden]{display:none}
+.modal-in{background:var(--panel);border:1px solid var(--cyan2);border-radius:8px;max-width:1100px;width:100%;max-height:90vh;overflow:auto;padding:28px 32px}
+.modal-in h2{font-size:clamp(22px,2.2vw,32px);margin:6px 0}
+.modal-in .desc{color:var(--dim);margin:0 0 18px}
+.reps{display:grid;gap:14px}
+.reps blockquote{margin:0;background:#0a1724;border-left:3px solid var(--cyan);padding:16px 20px;font-size:clamp(17px,1.5vw,22px);line-height:1.7;white-space:pre-wrap}
+.reps cite{display:block;color:var(--dim);font-size:14px;font-style:normal;margin-top:8px}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+
+/* ops overlay */
+#ops{position:fixed;inset:0;background:var(--bg);z-index:35;overflow:auto;padding:20px clamp(16px,3vw,48px) 40px}
+#ops[hidden]{display:none}
+.opsbar{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+.warnline{background:rgba(255,93,108,.1);border:1px solid #6b2a33;color:#ffb3ba;padding:8px 12px;border-radius:4px;font-size:14px;margin-bottom:16px}
+.dbox,.box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 18px;margin-bottom:16px}
+.dbox h3,.box h3{font-size:17px;margin-bottom:6px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.cnt{color:var(--cyan);font-size:14px;margin-left:8px}
+.preview{font-size:13px;color:var(--dim);margin-top:8px;line-height:1.6}
+.preview .err{color:var(--red)}
+label.file{display:inline-flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line2);padding:6px 12px;border-radius:4px;font-size:14px;cursor:pointer}
+label.file input{display:none}
+.fgrid{display:grid;grid-template-columns:220px 1fr;gap:10px 14px;align-items:start}
+.fgrid label{color:var(--dim);font-size:14px;padding-top:8px}
+.fgrid small{display:block;color:var(--dim);font-size:12px;margin-top:4px}
+.ok{color:var(--ok)} .no{color:var(--warn)}
+
+#toast{position:fixed;left:50%;bottom:70px;transform:translateX(-50%);background:var(--cyan2);color:#001a26;padding:8px 16px;border-radius:4px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none;z-index:50}
+#toast.show{opacity:1}
+
+@media (max-width:900px){
+  .two,.claims{grid-template-columns:1fr}
+  .side{position:static}
+  .fgrid{grid-template-columns:1fr}
+  .fgrid label{padding-top:0}
+}
+
+/* 6. 사후 질문 — 멤버 다시 보기(review) · 대장님 비교(review-board) */
+.rview{max-width:900px;margin:0 auto}
+.rq{font-size:clamp(22px,2.4vw,34px);line-height:1.55;margin:8px 0 20px}
+.firstbox{background:#0a1724;border-left:4px solid var(--cyan2);border-radius:4px;padding:16px 18px;margin-bottom:18px}
+.firstbox .lab{font-size:13px;letter-spacing:.12em;color:var(--cyan);font-weight:700;margin-bottom:8px}
+.firstbox .lab span{color:var(--dim);font-weight:400;letter-spacing:0;margin-left:6px}
+.firstbox p{margin:0;font-size:17px;line-height:1.75;white-space:pre-wrap}
+.firstbox.none{border-left-color:var(--line2)}.firstbox.none p{color:var(--dim);font-size:15px}
+.rbox{background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:18px 20px}
+.rbox label{display:block;font-size:15px;color:#dbe4ec;margin:16px 0 7px}
+.rbox label:first-child{margin-top:0}
+.rbox input,.rbox textarea{font-size:17px;padding:11px 13px}
+.rbox textarea{line-height:1.65}
+.chg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.chg button{font:inherit;font-size:16px;font-weight:700;padding:13px 6px;border-radius:6px;border:1px solid var(--line2);background:#0a1724;color:var(--dim);cursor:pointer}
+.chg button.on{color:#001a26}
+.chg button.on.changed{background:var(--warn);border-color:var(--warn)}
+.chg button.on.part{background:var(--cyan);border-color:var(--cyan)}
+.chg button.on.keep{background:var(--ok);border-color:var(--ok)}
+.rbox .send{display:block;width:100%;margin-top:18px;padding:14px;font-size:18px}
+.rbox .send:disabled{opacity:.4;cursor:default}
+.rbox .err{color:#ff8a8a;font-size:14px;margin-top:10px}
+.rdone h2{font-size:26px;font-weight:300;margin:0 0 4px}
+.rdone .note{text-align:left;font-size:15px;color:var(--dim);margin:0 0 14px}
+.rcmp{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.rcmp .col{background:#0a1724;border-radius:6px;padding:14px 16px;border-top:3px solid var(--cyan2)}
+.rcmp .col.now{border-top-color:var(--warn)}
+.rcmp .lab{font-size:13px;letter-spacing:.1em;color:var(--dim);font-weight:700;margin:0 0 6px;display:flex;gap:8px;align-items:center}
+.rcmp p{margin:0 0 10px;font-size:16px;line-height:1.7;white-space:pre-wrap}
+
+/* 대장님 비교 화면 (금지어 게임 결과 화면과 같은 위쪽 구성) */
+.wallview{max-width:1500px;margin:0 auto}
+.wtop{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:10px}
+.wtitle h2{font-size:clamp(22px,2vw,30px)}
+.winfo{font-size:15px;color:var(--dim)}
+.wbtns{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tbtn{font:inherit;font-size:17px;font-weight:700;padding:11px 18px;border-radius:6px;cursor:pointer;border:1px solid var(--line2);background:var(--panel2);color:var(--text)}
+.tbtn.reload{border-color:var(--cyan2);color:var(--cyan)}
+.tbtn small{display:inline-block;font-size:13px;margin-left:4px;padding:0 7px;border-radius:10px;background:rgba(70,210,255,.15)}
+.whint{color:var(--dim);font-size:14px;margin:0 0 14px}
+.wempty{max-width:760px;margin:60px auto;text-align:center;background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:30px}
+.wempty b{display:block;font-size:26px}
+.wempty span{display:block;color:var(--dim);margin-top:12px;font-size:16px;line-height:1.8}
+.pcards{display:grid;gap:14px}
+.pcard{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 20px;cursor:pointer}
+.pcard:hover{border-color:var(--line2)}
+.pcard .who{display:flex;gap:10px;align-items:center;margin-bottom:10px;color:#dbe4ec;font-size:17px;font-weight:700}
+.pcols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.pcols .lab{font-size:13px;letter-spacing:.12em;color:var(--dim);margin-bottom:4px;font-weight:700}
+.pcols p{margin:0 0 10px;line-height:1.7;font-size:17px;white-space:pre-wrap}
+.badge{font-size:13px;padding:2px 10px;border-radius:20px;border:1px solid var(--line2);font-weight:700}
+.badge.changed{border-color:var(--warn);color:var(--warn)}
+.badge.part{border-color:var(--cyan);color:var(--cyan)}
+.badge.keep{border-color:var(--ok);color:var(--ok)}
+.dmrow{display:grid;grid-template-columns:140px 1fr auto;gap:12px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}
+.dmrow pre{margin:0;white-space:pre-wrap;font-family:inherit;font-size:13px;color:var(--dim);max-height:96px;overflow:auto}
+@media (max-width:900px){.pcols,.dmrow,.rcmp{grid-template-columns:1fr}}
+@media (max-width:760px){.ctrl{display:none!important}.rbox{padding:16px}}
+
+</style>
+</head>
+<body>
+<main id="view"></main>
+<div id="ops" hidden></div>
+<div id="modal" hidden></div>
+<div id="toast"></div>
+<button id="menuPeek" data-act="present" title="조작줄 보이기 (P)">≡</button>
+<script>
+'use strict';
+/* 공통: 상태 저장, 타이머, QR, 응답 붙여넣기, 운영 화면, 키보드. 각 페이지는 맨 끝에서 setPage({...})로 자기 화면을 등록한다. */
+
+// 구글폼 응답 링크 (_src/설정.json → build.py가 넣음). 설정창(O)에서 바꾸면 그 브라우저에서는 그 값이 우선
+const FORMS = {"q1": "https://forms.gle/V6y4CHsSqmuoboKV9", "ban": "https://forms.gle/HnCNosyLGXsz9WrN8", "mini": "https://forms.gle/CnLskyPxAmTcj5rPA", "post": "https://forms.gle/dbt5EXQKCXaER1bK6", "miniCsv": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFh8CcA1-NiCFMa0bucG_YDS9Q3YUF02ObIAYb1aUpkML7YdJsueJZCKSLToDKDLuNwEfDY3YJF-v0/pub?gid=864911829&single=true&output=csv", "banCsv": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFh8CcA1-NiCFMa0bucG_YDS9Q3YUF02ObIAYb1aUpkML7YdJsueJZCKSLToDKDLuNwEfDY3YJF-v0/pub?gid=2130030714&single=true&output=csv"};
+function formOf(key) { return (S && S.cfg && S.cfg.form) || FORMS[key] || ''; }
+
+/* ---------- utils ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const norm = s => String(s || '').replace(/\s+/g, '').toLowerCase();
+const deep = o => JSON.parse(JSON.stringify(o));
+function hash(s) { let x = 5381; for (let i = 0; i < s.length; i++) x = ((x << 5) + x + s.charCodeAt(i)) | 0; return (x >>> 0).toString(36); }
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), 1800); }
+function getPath(o, p) { return p.split('.').reduce((a, k) => a == null ? a : a[k], o); }
+function setPath(o, p, v) {
+  const ks = p.split('.'); const last = ks.pop();
+  const tgt = ks.reduce((a, k) => a[k], o);
+  tgt[last] = typeof tgt[last] === 'number' ? (parseFloat(v) || 0) : v;
+}
+function merge(def, val) {
+  if (val === undefined || val === null) return deep(def);
+  if (Array.isArray(def)) return Array.isArray(val) ? val : deep(def);
+  if (def && typeof def === 'object') {
+    if (typeof val !== 'object') return deep(def);
+    const o = {};
+    for (const k of Object.keys(def)) o[k] = merge(def[k], val[k]);
+    return o;
+  }
+  return typeof val === typeof def ? val : def;
+}
+function who(nick, i) { return U.anon ? '참여자 ' + (i + 1) : esc(nick || '참여자 ' + (i + 1)); }
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); toast('복사됨'); return; } catch (e) {}
+  const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); toast('복사됨'); } catch (e) { toast('복사 실패 — 직접 선택해 복사하세요'); }
+  ta.remove();
+}
+function seeded(arr, seed) {
+  if (!seed) return arr.slice();
+  const a = arr.slice(); let s = seed;
+  const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+function beep() {
+  try {
+    const C = new (window.AudioContext || window.webkitAudioContext)();
+    [0, .35].forEach(d => { const o = C.createOscillator(), g = C.createGain(); o.frequency.value = 880; g.gain.value = .15;
+      o.connect(g); g.connect(C.destination); o.start(C.currentTime + d); o.stop(C.currentTime + d + .22); });
+  } catch (e) {}
+}
+
+/* ---------- state ---------- */
+let PAGE = null, S = null, U = null;
+function load() {
+  const f = Object.assign({ cfg: deep(PAGE.cfg) }, PAGE.fresh());
+  try {
+    const s = JSON.parse(localStorage.getItem(PAGE.key) || 'null');
+    if (!s) return f;
+    for (const k of Object.keys(f)) {
+      if (s[k] === undefined) continue;
+      if (k === 'cfg') f.cfg = merge(PAGE.cfg, s.cfg);
+      else if (f[k] && typeof f[k] === 'object' && !Array.isArray(f[k])) Object.assign(f[k], s[k]);
+      else f[k] = s[k];
+    }
+  } catch (e) {}
+  return f;
+}
+function save() {
+  try { localStorage.setItem(PAGE.key, JSON.stringify(S)); }
+  catch (e) { toast('브라우저 저장 실패 — 이 창을 닫으면 입력이 사라질 수 있습니다'); }
+}
+function saveU() { try { sessionStorage.setItem(PAGE.key + '_ui', JSON.stringify(U)); } catch (e) {} }
+function setPage(p) {
+  PAGE = p;
+  S = load();
+  let u = {};
+  try { u = JSON.parse(sessionStorage.getItem(PAGE.key + '_ui') || '{}'); } catch (e) {}
+  U = Object.assign({ present: false, ops: false, opsTab: PAGE.opsTabs[0][0], anon: true }, deep(PAGE.ui || {}), u);
+  // 같은 파일을 창 두 개로 열면(발표 창 + 운영 창) 데이터가 자동으로 맞춰진다
+  window.addEventListener('storage', e => { if (e.key === PAGE.key) { S = load(); render(); } });
+  render();
+}
+
+/* ---------- timers ---------- */
+const T = {};
+function timer(n, min) { if (!T[n]) T[n] = { total: min * 60, left: min * 60, running: false, endAt: 0 }; return T[n]; }
+function fmt(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+function tToggle(n) {
+  const t = T[n]; if (!t) return;
+  if (t.running) { t.left = Math.max(0, (t.endAt - Date.now()) / 1000); t.running = false; }
+  else { if (t.left <= 0) t.left = t.total; t.endAt = Date.now() + t.left * 1000; t.running = true; }
+  tick();
+}
+function tick() {
+  for (const n in T) { const t = T[n]; if (t.running && t.endAt <= Date.now()) { t.running = false; t.left = 0; beep(); } }
+  document.querySelectorAll('[data-timer]').forEach(el => {
+    const t = T[el.dataset.timer]; if (!t) return;
+    const left = t.running ? (t.endAt - Date.now()) / 1000 : t.left;
+    el.textContent = left <= 0 ? '마감' : fmt(left);
+    el.classList.toggle('warn', left > 0 && left <= 60);
+    el.classList.toggle('done', left <= 0);
+  });
+  document.querySelectorAll('[data-timerbar]').forEach(el => {
+    const t = T[el.dataset.timerbar]; if (!t) return;
+    const left = t.running ? (t.endAt - Date.now()) / 1000 : t.left;
+    el.style.transform = `scaleX(${Math.max(0, Math.min(1, left / t.total))})`;
+  });
+}
+setInterval(tick, 250);
+function timerBox(n, min) {
+  timer(n, min);
+  return `<div class="timerbox"><div class="timer" data-timer="${n}">${fmt(T[n].left)}</div>
+    <div class="tbtns"><button class="b sm" data-act="tToggle" data-n="${n}">시작/정지 (T)</button>
+    <button class="b sm" data-act="tReset" data-n="${n}" data-m="${min}">리셋</button>
+    <button class="b sm" data-act="tAdd" data-n="${n}">+1분</button></div></div>`;
+}
+
+/* ---------- qr / ctrl ---------- */
+function qrBox(url, label, small) {
+  if (!url) return `<div class="qrbox empty">폼 링크 미설정<br><small><kbd>O</kbd> 운영 화면 → 설정</small></div>`;
+  return `<div class="qrbox ${small ? 'qsmall' : ''}"><div class="qr" data-url="${esc(url)}"></div>
+    <div class="qrlabel">${esc(label)}</div><a class="qrurl" href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a></div>`;
+}
+function renderQR() {
+  document.querySelectorAll('.qr[data-url]').forEach(el => {
+    if (window.QRCode) { try { new QRCode(el, { text: el.dataset.url, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M }); } catch (e) { el.textContent = 'QR 생성 실패 — 아래 링크 사용'; } }
+    else el.textContent = 'QR 불러오기 실패(인터넷 확인) — 아래 링크 사용';
+  });
+}
+function ctrl(inner) {
+  const keys = [['←', '→', '이전 · 다음'], ['T', '타이머'], ['F', '전체화면'], ['P', '이 줄 숨기기']]
+    .filter(k => k[0] !== 'T' || PAGE.timer).filter(k => k[0] !== '←' || !PAGE.noNav)
+    .map(k => `<span class="key">${k.slice(0, -1).map(x => `<kbd>${x}</kbd>`).join('')}<em>${k[k.length - 1]}</em></span>`).join('');
+  return `<div class="ctrl"><div class="acts">${inner}</div><div class="hint">${keys}</div></div>`;
+}
+
+/* ---------- 응답 붙여넣기 ---------- */
+function parseDelim(text) {
+  text = String(text || '').replace(/\r\n?/g, '\n').replace(/\n+$/, '');
+  if (!text.trim()) return [];
+  const d = text.split('\n')[0].includes('\t') ? '\t' : ',';
+  const rows = []; let row = [], cur = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) {
+      if (ch === '"') {
+        const nx = text[i + 1];
+        if (nx === '"') { cur += '"'; i++; }
+        else if (nx === d || nx === '\n' || nx === undefined) q = false;
+        else { cur = '"' + cur + '"'; q = false; } // 따옴표로 시작했지만 감싸기용이 아니었던 칸
+      } else cur += ch;
+    } else if (ch === '"' && cur === '') q = true;
+    else if (ch === d) { row.push(cur); cur = ''; }
+    else if (ch === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; }
+    else cur += ch;
+  }
+  row.push(cur); rows.push(row);
+  return rows.filter(r => r.some(c => c.trim() !== ''));
+}
+function table(text) {
+  const rows = parseDelim(text);
+  if (!rows.length) return null;
+  return { h: rows[0].map(s => s.trim()), rows: rows.slice(1) };
+}
+const isTs = h => /타임스탬프|timestamp/i.test(h);
+function nickIdx(h) { return h.findIndex(x => /닉네임|이름/.test(x)); }
+function dedupe(list) { const m = new Map(); list.forEach((r, i) => m.set(r.nick ? norm(r.nick) : '#' + i, r)); return [...m.values()]; }
+// 1번 질문 응답 표 → [{id, nick, text}]
+function parseQ1(t) {
+  const ni = nickIdx(t.h);
+  let ti = t.h.findIndex(x => /타당|답변|이유/.test(x) && !/닉네임/.test(x));
+  if (ti < 0) ti = t.h.length - 1;
+  const out = dedupe(t.rows.map(r => ({ nick: ni >= 0 ? (r[ni] || '').trim() : '', text: (r[ti] || '').trim() })).filter(r => r.text));
+  out.forEach(r => r.id = hash(norm(r.nick) + '|' + r.text.slice(0, 40)));
+  return { out, warn: ni < 0 ? '닉네임 열을 찾지 못했습니다' : '' };
+}
+const lastWarn = {};
+function parseKey(k, text) {
+  S.raw[k] = text;
+  const t = table(text);
+  if (!t) { S.data[k] = []; lastWarn[k] = '내용이 없습니다'; save(); render(); return; }
+  const { out, warn } = PAGE.parsers[k](t);
+  S.data[k] = out; lastWarn[k] = warn; save(); render();
+  toast(out.length + '건 불러옴');
+}
+function dataBox(k, label, extra) {
+  const list = S.data[k];
+  const names = list.slice(0, 40).map((r, i) => esc(r.nick || '(닉네임 없음 ' + (i + 1) + ')')).join(', ');
+  return `<div class="dbox"><h3>${label}<span class="cnt">${list.length}건</span></h3>
+    <p class="help">구글 응답 시트에서 해당 탭을 열고 <kbd>Ctrl</kbd>+<kbd>A</kbd> → <kbd>Ctrl</kbd>+<kbd>C</kbd> → 아래 칸에 <kbd>Ctrl</kbd>+<kbd>V</kbd> 하면 바로 불러옵니다. 같은 닉네임이 두 번 내면 마지막 것만 씁니다.</p>
+    <textarea rows="4" data-raw="${k}" placeholder="여기에 붙여넣기">${esc(S.raw[k])}</textarea>
+    <div class="row"><button class="b pri" data-act="parse" data-k="${k}">불러오기</button>
+      <label class="file">CSV 파일 선택<input type="file" accept=".csv,.tsv,.txt" data-file="${k}"></label>
+      <button class="b danger" data-act="clearData" data-k="${k}">비우기</button>${extra || ''}</div>
+    <div class="preview">${lastWarn[k] ? `<span class="err">${esc(lastWarn[k])}</span><br>` : ''}${list.length ? '인식된 닉네임: ' + names + (list.length > 40 ? ' …' : '') : ''}</div></div>`;
+}
+
+/* ---------- 설정 칸 ---------- */
+function fld(path, label, opts = {}) {
+  const v = getPath(S.cfg, path);
+  const input = opts.ta ? `<textarea rows="${opts.ta}" data-cfg="${path}">${esc(v)}</textarea>` : `<input data-cfg="${path}" value="${esc(v)}" ${typeof v === 'number' ? 'type="number" min="1"' : ''}>`;
+  return `<label>${label}</label><div>${input}${opts.help ? `<small>${opts.help}</small>` : ''}</div>`;
+}
+function backupBox() {
+  return `<div class="box"><h3>백업 · 초기화</h3><p class="help">입력한 내용은 이 브라우저에 저장됩니다. 다른 PC로 옮길 때는 백업 파일을 내보내서 그 PC에서 불러오세요.</p>
+    <div class="row"><button class="b" data-act="exportJson">백업 내보내기</button><label class="file">백업 불러오기<input type="file" accept=".json" data-file="import"></label>
+    <button class="b danger" data-act="resetCfg">설정만 기본값으로</button>${PAGE.parsers ? '<button class="b danger" data-act="resetData">응답·분류 전부 비우기</button>' : ''}</div></div>`;
+}
+
+/* ---------- render ---------- */
+function render() {
+  document.body.classList.toggle('present', U.present);
+  $('#view').innerHTML = PAGE.view();
+  const ops = $('#ops');
+  if (U.ops) {
+    const y = ops.scrollTop;
+    const tab = PAGE.opsTabs.find(t => t[0] === U.opsTab) || PAGE.opsTabs[0];
+    ops.innerHTML = `<div class="warnline">운영 화면입니다. ${PAGE.parsers ? '닉네임·답변 원문이 보이므로 ' : ''}화면 공유 중에는 열지 마세요. 닫기: <kbd>O</kbd> 또는 <kbd>Esc</kbd></div>
+      <div class="opsbar">${PAGE.opsTabs.length > 1 ? PAGE.opsTabs.map(t => `<button class="b ${tab[0] === t[0] ? 'on' : ''}" data-act="opsTab" data-t="${t[0]}">${t[1]}</button>`).join('') : ''}
+      <span style="flex:1"></span><button class="b pri" data-act="ops">운영 화면 닫기</button></div>${tab[2]()}`;
+    ops.hidden = false; ops.scrollTop = y;
+  } else { ops.hidden = true; ops.innerHTML = ''; }
+  renderQR(); tick(); saveU();
+  if (PAGE.after) PAGE.after();
+}
+window.addEventListener('resize', () => { if (PAGE && PAGE.after) PAGE.after(); });
+// 1600x900으로 설계한 .dstage 화면을 창 크기에 맞춰 확대/축소 (조작줄이 보이면 그만큼 뺌)
+function fitStage() {
+  const st = $('.dstage'); if (!st) return;
+  const h = innerHeight - (U.present ? 0 : 56);
+  const k = Math.min(innerWidth / 1600, h / 900);
+  st.style.transform = `translate(${(innerWidth - 1600 * k) / 2}px,${Math.max(0, (h - 900 * k) / 2)}px) scale(${k})`;
+}
+function openModal(html) { const m = $('#modal'); m.innerHTML = `<div class="modal-in">${html}</div>`; m.hidden = false; }
+function closeModal() { const m = $('#modal'); m.hidden = true; m.innerHTML = ''; }
+$('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+function full() { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); }
+
+const ACT = {
+  present: () => { U.present = !U.present; render(); },
+  full,
+  ops: () => { U.ops = !U.ops; render(); },
+  opsTab: b => { U.opsTab = b.dataset.t; render(); },
+  closeModal,
+  anon: () => { U.anon = !U.anon; render(); },
+  tToggle: b => tToggle(b.dataset.n),
+  tReset: b => { delete T[b.dataset.n]; timer(b.dataset.n, +b.dataset.m); tick(); },
+  tAdd: b => { const t = T[b.dataset.n]; if (!t) return; if (t.running) t.endAt += 60000; else t.left = Math.max(0, t.left) + 60; tick(); },
+  parse: b => { const k = b.dataset.k; parseKey(k, $(`textarea[data-raw="${k}"]`).value); },
+  clearData: b => { const k = b.dataset.k; if (!confirm('이 응답 데이터를 비울까요?')) return; S.raw[k] = ''; S.data[k] = []; lastWarn[k] = ''; save(); render(); },
+  exportJson: () => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' }));
+    a.download = PAGE.key + '_백업_' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '') + '.json'; a.click();
+  },
+  resetCfg: () => { if (!confirm('설정(문구·링크)을 기본값으로 되돌릴까요?')) return; S.cfg = deep(PAGE.cfg); save(); render(); },
+  resetData: () => { if (!confirm('불러온 응답과 분류를 전부 비울까요? 설정은 그대로 둡니다.')) return; const cfg = S.cfg; S = Object.assign({ cfg }, PAGE.fresh()); save(); render(); }
+};
+document.addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (b && ACT[b.dataset.act]) ACT[b.dataset.act](b, e); });
+
+document.addEventListener('change', e => {
+  const el = e.target, ds = el.dataset;
+  if (ds.cfg) { setPath(S.cfg, ds.cfg, el.value); save(); toast('저장됨'); if (!U.ops) render(); return; }
+  if (PAGE.onChange && PAGE.onChange(el)) return;
+  if (ds.file) {
+    const f = el.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      if (ds.file === 'import') {
+        try { localStorage.setItem(PAGE.key, JSON.stringify(JSON.parse(rd.result))); S = load(); render(); toast('백업을 불러왔습니다'); }
+        catch (err) { toast('백업 파일을 읽지 못했습니다'); }
+      } else parseKey(ds.file, rd.result);
+    };
+    rd.readAsText(f, 'utf-8');
+  }
+});
+document.addEventListener('paste', e => {
+  const ta = e.target.closest && e.target.closest('textarea[data-raw]');
+  if (ta) setTimeout(() => parseKey(ta.dataset.raw, ta.value), 30);
+});
+document.addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('input,textarea,select')) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key;
+  if (k === 'Escape') { if (!$('#modal').hidden) closeModal(); else if (U.ops) { U.ops = false; render(); } return; }
+  if (k === 'o' || k === 'O' || k === 'ㅐ') { U.ops = !U.ops; render(); return; }
+  if (!$('#modal').hidden || U.ops) return;
+  if (k === 'p' || k === 'P' || k === 'ㅔ') { U.present = !U.present; render(); }
+  else if (k === 'f' || k === 'F' || k === 'ㄹ') full();
+  else if (k === 't' || k === 'T' || k === 'ㅅ') { if (PAGE.timer && T[PAGE.timer]) tToggle(PAGE.timer); }
+  else if (k === 'ArrowRight' || k === 'PageDown' || k === ' ') { e.preventDefault(); PAGE.step(1); render(); }
+  else if (k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); PAGE.step(-1); render(); }
+});
+
+/* 6. 사후 질문 — 처음 답변을 다시 보고, 바꾸거나 유지한 근거를 쓴다.
+   같은 원본으로 두 화면 (선택 게임 play/choice 구조와 같음):
+   review.html = 멤버·공유 화면 — 이 기기에서 기습질문에 쓴 '내 처음 답변'을 보여주고(같은 폰이면 자동), 생각의 변화·근거를 써서
+                 [제출] → 다시 보기 구글폼으로 자동 제출(응답 시트4). 제출 후 처음 답변과 지금 근거를 나란히 보여준다.
+   review-board.html = 대장님 결과 화면 — 처음 답변과 다시 본 근거를 멤버별로 나란히. 처음 답변(시트1)은 공개하지 않으므로 붙여넣기.
+   해석·평가 문구는 넣지 않는다. 시간 제한 없음. */
+const HOST = true;
+const POST_FORM = 'https://docs.google.com/forms/d/e/1FAIpQLScICrqjs3gGysW9lDhHgsqFjF3LJvBCRZufBWNwpOEpCdkwAg/formResponse';
+const P_NICK = 'entry.317737462', P_CHANGE = 'entry.1876539906', P_REASON = 'entry.715012023', P_AGAIN = 'entry.204985074';
+const CHANGES = ['바뀌었다', '일부 바뀌었다', '바뀌지 않았다'];
+
+function parsePost(t) {
+  const ni = nickIdx(t.h);
+  const ci = t.h.findIndex(x => /변화/.test(x));
+  const ai = t.h.findIndex(x => /다시 답한다면|다시 쓴다면/.test(x));
+  const ri = t.h.findIndex((x, i) => /검토|이유/.test(x) && i !== ci && i !== ai);
+  const out = dedupe(t.rows.map(r => ({ nick: ni >= 0 ? (r[ni] || '').trim() : '', change: ci >= 0 ? (r[ci] || '').trim() : '',
+    reason: ri >= 0 ? (r[ri] || '').trim() : '', again: ai >= 0 ? (r[ai] || '').trim() : '' })).filter(r => r.reason || r.change));
+  return { out, warn: ri < 0 ? '이유 열을 찾지 못했습니다' : '' };
+}
+function cat(s) { s = s || ''; if (/일부/.test(s)) return 'part'; if (/않/.test(s)) return 'keep'; if (/바뀌었/.test(s)) return 'changed'; return ''; }
+function pairs() {
+  const m = new Map(S.data.q1.map(r => [norm(r.nick), r]));
+  return S.data.post.map((p, i) => ({ p, i, f: m.get(norm(p.nick)) }));
+}
+function dmText(r) {
+  return S.cfg.dm.replace(/\{닉네임\}/g, r.nick || '').replace(/\{답변\}/g, r.text).replace(/\{링크\}/g, new URL('review.html', location.href).href);
+}
+
+// ---------- 멤버: 내 처음 답변(이 기기) + 다시 보기 ----------
+const FIRST = (() => { try { const a = JSON.parse(localStorage.getItem('bm1025_answer')); if (a && a.v === 1 && a.sent && a.text) return a; } catch (e) {} return null; })();
+const RKEY = 'bm1025_review';
+let R = (() => { try { const r = JSON.parse(localStorage.getItem(RKEY)); if (r && r.v === 1) return r; } catch (e) {} return { v: 1, nick: FIRST ? FIRST.nick : '', change: '', reason: '', again: '', sent: false }; })();
+const rsave = () => { try { localStorage.setItem(RKEY, JSON.stringify(R)); } catch (e) {} };
+const rReady = () => R.nick.trim() && R.change && R.reason.trim();
+function firstBox() {
+  return FIRST
+    ? `<div class="firstbox"><div class="lab">내가 처음 쓴 답변 <span>${esc(FIRST.nick)}</span></div><p>${esc(FIRST.text)}</p></div>`
+    : `<div class="firstbox none"><div class="lab">내가 처음 쓴 답변</div><p>이 기기에서는 처음 답변을 찾지 못했어요. 처음에 다른 기기로 냈다면, 처음 답변을 떠올리며 써 주세요.</p></div>`;
+}
+function memberView(c) {
+  if (R.sent) return `<section class="stage rview"><div class="kicker">다시 보기</div><h1 class="rq">${esc(c.question)}</h1>
+    <div class="rdone"><h2>제출되었습니다</h2><p class="note">${esc(R.nick)}님의 답변이 기록되었습니다. 진행자의 안내를 기다려 주세요.</p>
+      <div class="rcmp"><div class="col first"><div class="lab">처음 답변</div><p>${FIRST ? esc(FIRST.text) : '<i>(이 기기에 없음)</i>'}</p></div>
+        <div class="col now"><div class="lab">다시 보고 <span class="badge ${cat(R.change)}">${esc(R.change)}</span></div><p>${esc(R.reason)}</p>
+        ${R.again ? `<div class="lab">지금 다시 답한다면</div><p>${esc(R.again)}</p>` : ''}</div></div></div></section>`;
+  return `<section class="stage rview"><div class="kicker">다시 보기</div><h1 class="rq">${esc(c.question)}</h1>
+    ${firstBox()}
+    <div class="rbox">
+      <label for="rnick">닉네임 (텔레그램 닉네임 그대로)</label><input type="text" id="rnick" maxlength="40" autocomplete="off" value="${esc(R.nick)}">
+      <label>생각의 변화: 처음 판단과 비교하면</label>
+      <div class="chg">${CHANGES.map(x => `<button class="${R.change === x ? 'on ' + cat(x) : ''}" data-act="rChange" data-v="${esc(x)}">${x}</button>`).join('')}</div>
+      <label for="rreason">바뀌었다면 무엇 때문에, 바뀌지 않았다면 그 이유는?</label><textarea id="rreason" rows="5">${esc(R.reason)}</textarea>
+      <label for="ragain">지금 다시 답한다면 (선택)</label><textarea id="ragain" rows="4">${esc(R.again)}</textarea>
+      <button class="b pri send" id="rsend" data-act="rSend" ${rReady() ? '' : 'disabled'}>제출</button><div class="err" id="rerr" hidden></div>
+    </div></section>`;
+}
+document.addEventListener('input', e => {
+  const k = { rnick: 'nick', rreason: 'reason', ragain: 'again' }[e.target.id]; if (!k) return;
+  R[k] = e.target.value; rsave();
+  const b = $('#rsend'); if (b) b.disabled = !rReady();
+});
+
+// ---------- 대장님: 처음 답변 ↔ 다시 본 근거 ----------
+function hostView() {
+  const ps = pairs(), counts = { changed: 0, part: 0, keep: 0 };
+  ps.forEach(x => { const k = cat(x.p.change); if (k) counts[k]++; });
+  const top = `<div class="wtop"><div class="wtitle"><div><h2>처음 답변과 다시 본 근거</h2>
+      <span class="winfo">응답 ${ps.length}명 · 바뀌었다 ${counts.changed} · 일부 바뀌었다 ${counts.part} · 바뀌지 않았다 ${counts.keep}</span></div></div>
+    <div class="wbtns"><button class="tbtn reload" data-act="pasteOpen" data-k="q1">📋 처음 답변 붙여넣기 ${S.data.q1.length ? `<small>${S.data.q1.length}</small>` : ''}</button>
+      <button class="tbtn reload" data-act="pasteOpen" data-k="post">📋 다시 보기 붙여넣기 ${S.data.post.length ? `<small>${S.data.post.length}</small>` : ''}</button></div></div>`;
+  const empty = !ps.length ? `<div class="wempty"><b>아직 응답을 불러오지 않았습니다</b><span>① [📋 처음 답변 붙여넣기]: 응답 시트 "설문지 응답 시트1" 탭<br>② [📋 다시 보기 붙여넣기]: "설문지 응답 시트4" 탭<br>각 탭에서 <kbd>Ctrl</kbd>+<kbd>A</kbd> → <kbd>Ctrl</kbd>+<kbd>C</kbd> 해서 붙여넣으세요</span></div>` : '';
+  return `<section class="stage wallview">${top}<p class="whint">카드를 누르면 크게 볼 수 있어요.</p>
+    <div class="pcards">${ps.map(x => `<div class="pcard" data-act="zoom" data-i="${x.i}">
+      <div class="who"><span>${esc(x.p.nick || '(닉네임 없음)')}</span><span class="badge ${cat(x.p.change)}">${esc(x.p.change || '-')}</span></div>
+      <div class="pcols"><div><div class="lab">처음 답변</div><p>${x.f ? esc(x.f.text) : '<i style="color:var(--warn)">처음 답변 없음 (처음 답변 붙여넣기 또는 닉네임 확인)</i>'}</p></div>
+      <div><div class="lab">바꾸거나 유지한 근거</div><p>${esc(x.p.reason)}</p>${x.p.again ? `<div class="lab">지금 다시 답한다면</div><p>${esc(x.p.again)}</p>` : ''}</div></div></div>`).join('')}</div>${empty}</section>`;
+}
+
+Object.assign(ACT, {
+  rChange: b => { R.change = b.dataset.v; rsave(); render(); },
+  rSend: b => {
+    if (!rReady() || !confirm('제출할까요? 제출한 뒤에는 고칠 수 없습니다.')) return;
+    b.disabled = true; b.textContent = '제출 중…';
+    const p = new URLSearchParams(); p.append(P_NICK, R.nick.trim()); p.append(P_CHANGE, R.change); p.append(P_REASON, R.reason.trim()); if (R.again.trim()) p.append(P_AGAIN, R.again.trim());
+    fetch(POST_FORM, { method: 'POST', mode: 'no-cors', body: p })
+      .then(() => { R.sent = true; rsave(); render(); window.scrollTo(0, 0); })
+      .catch(() => { b.disabled = false; b.textContent = '다시 제출'; const e = $('#rerr'); e.hidden = false; e.textContent = '제출하지 못했습니다. 인터넷 연결을 확인하고 다시 눌러주세요. (쓴 내용은 그대로 남아 있습니다)'; });
+  },
+  // 붙여넣기 칸 열기 (붙여넣으면 저절로 닫힌다)
+  pasteOpen: b => { U.ops = true; U.opsTab = 'data'; U.pk = b.dataset.k; render(); setTimeout(() => { const t = $(`textarea[data-raw="${b.dataset.k}"]`); if (t) { t.value = ''; t.focus(); t.scrollIntoView({ block: 'center' }); } }, 50); },
+  copyDm: b => copyText(dmText(S.data.q1[+b.dataset.i])),
+  zoom: b => {
+    const x = pairs().find(p => p.i === +b.dataset.i); if (!x) return;
+    openModal(`<div class="kicker">${esc(x.p.nick)} · ${esc(x.p.change)}</div><div class="reps" style="margin-top:14px">
+      <blockquote><cite style="margin:0 0 6px">처음 답변</cite>${x.f ? esc(x.f.text) : '(찾지 못함)'}</blockquote>
+      <blockquote style="border-color:var(--warn)"><cite style="margin:0 0 6px">바꾸거나 유지한 근거</cite>${esc(x.p.reason)}</blockquote>
+      ${x.p.again ? `<blockquote><cite style="margin:0 0 6px">지금 다시 답한다면</cite>${esc(x.p.again)}</blockquote>` : ''}</div>
+      <div class="modal-btns"><button class="b pri" data-act="closeModal">닫기 (Esc)</button></div>`);
+  }
+});
+document.addEventListener('paste', e => {
+  const ta = e.target.closest && e.target.closest('textarea[data-raw]'); if (!ta || !HOST) return;
+  setTimeout(() => { const k = ta.dataset.raw; if (S.data[k] && S.data[k].length) { U.ops = false; render(); toast(S.data[k].length + '명 불러옴'); } }, 120);
+});
+
+setPage({
+  key: 'bm1025_6',
+  noNav: true,
+  cfg: {
+    form: '',
+    question: '처음 내린 판단을 다시 검토해 보세요. 생각이 바뀌었다면 무엇 때문에 바뀌었나요? 바뀌지 않았다면 그 이유는 무엇인가요?',
+    dm: '{닉네임}님, 처음 5분 질문에 쓰신 답변입니다.\n\n「{답변}」\n\n천천히 다시 읽어보시고 아래 링크에서 다시 보기에 답해주세요.\n{링크}'
+  },
+  fresh: () => ({ raw: { q1: '', post: '' }, data: { q1: [], post: [] } }),
+  ui: {},
+  parsers: { q1: parseQ1, post: parsePost },
+  step() {},
+  view() { return HOST ? hostView() : memberView(S.cfg); },
+  opsTabs: [
+    ['data', '응답 불러오기', () => dataBox('q1', '① 처음 답변 — 응답 시트 "설문지 응답 시트1" 탭') + dataBox('post', '② 다시 보기 응답 — 응답 시트 "설문지 응답 시트4" 탭')],
+    ['dm', '처음 답변 DM (다른 기기로 낸 멤버용)', () => {
+      const posted = new Set(S.data.post.map(p => norm(p.nick)));
+      return `<div class="box"><h3>DM 문구</h3><p class="help">처음 답변을 다른 기기로 낸 멤버에게만 보내면 됩니다. {닉네임} {답변} {링크}가 자동으로 바뀝니다.</p>
+        <textarea rows="5" data-cfg="dm">${esc(S.cfg.dm)}</textarea></div>
+        <div class="box"><h3>멤버별 DM (${S.data.q1.length}명)</h3><p class="help">[복사] → 텔레그램에서 그 멤버 개인 DM에 붙여넣기. ✓는 다시 보기 응답을 낸 사람.</p>
+        ${S.data.q1.map((r, i) => `<div class="dmrow"><b>${esc(r.nick || '(닉네임 없음)')} ${posted.has(norm(r.nick)) ? '<span class="ok">✓</span>' : ''}</b><pre>${esc(dmText(r))}</pre>
+          <button class="b" data-act="copyDm" data-i="${i}">복사</button></div>`).join('') || '<p class="help">먼저 [응답 불러오기]에서 ① 처음 답변을 불러오세요.</p>'}</div>`;
+    }],
+    ['cfg', '설정', () => `<div class="box"><h3>문구</h3><div class="fgrid">${fld('question', '질문', { ta: 3 })}</div></div>${backupBox()}`]
+  ]
+});
+
+</script>
+</body>
+</html>

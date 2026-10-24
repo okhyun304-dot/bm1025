@@ -126,6 +126,13 @@ label.file input{display:none}
 .qpair .qtext{font-size:clamp(17px,1.5vw,24px)}
 .qpair>div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:20px 24px}
 @media (max-width:900px){.qpair{grid-template-columns:1fr}}
+/* 위쪽 큰 버튼 */
+.qtop{display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap;max-width:1500px;margin:0 auto 10px}
+.seg{display:flex;border:1px solid var(--line2);border-radius:6px;overflow:hidden}
+.seg button{font:inherit;font-size:16px;font-weight:700;padding:11px 18px;background:var(--panel);color:var(--dim);border:0;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line2)}
+.seg button.on{background:var(--cyan2);color:#001a26}
+.quote{min-height:calc(100vh - 140px)}
 
 </style>
 </head>
@@ -432,7 +439,8 @@ document.addEventListener('keydown', e => {
   else if (k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); PAGE.step(-1); render(); }
 });
 
-/* 5. B 인용 반전 — 화면 1 이름 가림 → 화면 2 이름 공개 → 나란히. 작성자에 대한 평가 문구는 넣지 않는다 */
+/* 5. B 인용 반전 — 화면 1 이름 가림 → 화면 2 이름 공개 → 나란히. 작성자에 대한 평가 문구는 넣지 않는다.
+   대장님 화면 공유용: 위쪽 큰 버튼(문장 1·2, ①②③)만, 아래 조작줄 없음. 키보드 → ← 로도 넘김 */
 function quoteHtml(text, reveal) {
   return esc(text).replace(/\{\{(.+?)\}\}/g, (m, name) => reveal ? `<span class="qname">${name}</span>` : `<span class="qmask">${esc(S.cfg.mask)}</span>`);
 }
@@ -456,15 +464,16 @@ setPage({
   step(d) { U.step = Math.max(0, Math.min(2, U.step + d)); },
   view() {
     const qs = S.cfg.quotes, q = qs[U.idx] || qs[0];
-    const bar = `${qs.length > 1 ? qs.map((x, i) => `<button class="b ${i === U.idx ? 'on' : ''}" data-act="idx" data-i="${i}">문장 ${i + 1}</button>`).join('') : ''}
-      ${['화면 1 · 이름 가림', '화면 2 · 이름 공개', '나란히'].map((l, i) => `<button class="b ${U.step === i ? 'on' : ''}" data-act="setStep" data-s="${i}">${l}</button>`).join('')}`;
-    if (!q || !q.text.trim()) return `<section class="stage quote"><p class="help"><kbd>O</kbd> 설정에서 문장을 넣으세요.</p></section>${ctrl(bar)}`;
-    if (U.step === 2) return `<section class="stage quote" style="max-width:none"><div class="qpair">
+    // 위쪽 큰 버튼 (아래 조작줄 없음) — 키보드 → ← 로도 넘김
+    const bar = `<div class="qtop">${qs.length > 1 ? `<div class="seg">${qs.map((x, i) => `<button class="${i === U.idx ? 'on' : ''}" data-act="idx" data-i="${i}">문장 ${i + 1}</button>`).join('')}</div>` : ''}
+      <div class="seg">${['① 이름 가림', '② 이름 공개', '③ 나란히'].map((l, i) => `<button class="${U.step === i ? 'on' : ''}" data-act="setStep" data-s="${i}">${l}</button>`).join('')}</div></div>`;
+    if (!q || !q.text.trim()) return `${bar}<section class="stage quote"><p class="help"><kbd>O</kbd> 설정에서 문장을 넣으세요.</p></section>`;
+    if (U.step === 2) return `${bar}<section class="stage quote" style="max-width:none"><div class="qpair">
         <div><div class="kicker">화면 1 · 이름을 가린 채</div><div class="qtext">${quoteHtml(q.text, false)}</div></div>
         <div><div class="kicker">화면 2 · 원문 그대로</div><div class="qtext">${quoteHtml(q.text, true)}</div></div></div>
-        <div class="qsrc" style="margin-top:14px">${esc(q.label)}</div></section>${ctrl(bar)}`;
-    return `<section class="stage quote"><div class="kicker">${U.step ? '화면 2 · 원문 그대로' : '화면 1 · 이름을 가린 채'}</div>
-      <div class="qtext">${quoteHtml(q.text, U.step === 1)}</div><div class="qsrc">${esc(q.label)}</div></section>${ctrl(bar)}`;
+        <div class="qsrc" style="margin-top:14px">${esc(q.label)}</div></section>`;
+    return `${bar}<section class="stage quote"><div class="kicker">${U.step ? '화면 2 · 원문 그대로' : '화면 1 · 이름을 가린 채'}</div>
+      <div class="qtext">${quoteHtml(q.text, U.step === 1)}</div><div class="qsrc">${esc(q.label)}</div></section>`;
   },
   opsTabs: [['cfg', '설정', () => `<div class="box"><h3>문장</h3><div class="fgrid">${fld('mask', '가림 표시')}
     ${S.cfg.quotes.map((q, i) => fld(`quotes.${i}.text`, `문장 ${i + 1}`, { ta: 4, help: '철학자 이름을 {{이름}}처럼 감싸면 화면 1에서 가려집니다' }) + fld(`quotes.${i}.label`, `문장 ${i + 1} 출처 표기`)).join('')}</div></div>${backupBox()}`]]

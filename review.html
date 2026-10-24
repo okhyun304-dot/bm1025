@@ -8,7 +8,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
   --bg:#08121c; --panel:#0f1d2b; --panel2:#132638; --line:#264660; --line2:#2f5677;
@@ -117,20 +116,64 @@ label.file input{display:none}
   .fgrid label{padding-top:0}
 }
 
-.ask h1{font-size:clamp(24px,2.6vw,38px);line-height:1.6;margin-top:12px}
+/* 6. 사후 질문 — 멤버 다시 보기(review) · 대장님 비교(review-board) */
+.rview{max-width:900px;margin:0 auto}
+.rq{font-size:clamp(22px,2.4vw,34px);line-height:1.55;margin:8px 0 20px}
+.firstbox{background:#0a1724;border-left:4px solid var(--cyan2);border-radius:4px;padding:16px 18px;margin-bottom:18px}
+.firstbox .lab{font-size:13px;letter-spacing:.12em;color:var(--cyan);font-weight:700;margin-bottom:8px}
+.firstbox .lab span{color:var(--dim);font-weight:400;letter-spacing:0;margin-left:6px}
+.firstbox p{margin:0;font-size:17px;line-height:1.75;white-space:pre-wrap}
+.firstbox.none{border-left-color:var(--line2)}.firstbox.none p{color:var(--dim);font-size:15px}
+.rbox{background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:18px 20px}
+.rbox label{display:block;font-size:15px;color:#dbe4ec;margin:16px 0 7px}
+.rbox label:first-child{margin-top:0}
+.rbox input,.rbox textarea{font-size:17px;padding:11px 13px}
+.rbox textarea{line-height:1.65}
+.chg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.chg button{font:inherit;font-size:16px;font-weight:700;padding:13px 6px;border-radius:6px;border:1px solid var(--line2);background:#0a1724;color:var(--dim);cursor:pointer}
+.chg button.on{color:#001a26}
+.chg button.on.changed{background:var(--warn);border-color:var(--warn)}
+.chg button.on.part{background:var(--cyan);border-color:var(--cyan)}
+.chg button.on.keep{background:var(--ok);border-color:var(--ok)}
+.rbox .send{display:block;width:100%;margin-top:18px;padding:14px;font-size:18px}
+.rbox .send:disabled{opacity:.4;cursor:default}
+.rbox .err{color:#ff8a8a;font-size:14px;margin-top:10px}
+.rdone h2{font-size:26px;font-weight:300;margin:0 0 4px}
+.rdone .note{text-align:left;font-size:15px;color:var(--dim);margin:0 0 14px}
+.rcmp{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.rcmp .col{background:#0a1724;border-radius:6px;padding:14px 16px;border-top:3px solid var(--cyan2)}
+.rcmp .col.now{border-top-color:var(--warn)}
+.rcmp .lab{font-size:13px;letter-spacing:.1em;color:var(--dim);font-weight:700;margin:0 0 6px;display:flex;gap:8px;align-items:center}
+.rcmp p{margin:0 0 10px;font-size:16px;line-height:1.7;white-space:pre-wrap}
+
+/* 대장님 비교 화면 (금지어 게임 결과 화면과 같은 위쪽 구성) */
+.wallview{max-width:1500px;margin:0 auto}
+.wtop{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:10px}
+.wtitle h2{font-size:clamp(22px,2vw,30px)}
+.winfo{font-size:15px;color:var(--dim)}
+.wbtns{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tbtn{font:inherit;font-size:17px;font-weight:700;padding:11px 18px;border-radius:6px;cursor:pointer;border:1px solid var(--line2);background:var(--panel2);color:var(--text)}
+.tbtn.reload{border-color:var(--cyan2);color:var(--cyan)}
+.tbtn small{display:inline-block;font-size:13px;margin-left:4px;padding:0 7px;border-radius:10px;background:rgba(70,210,255,.15)}
+.whint{color:var(--dim);font-size:14px;margin:0 0 14px}
+.wempty{max-width:760px;margin:60px auto;text-align:center;background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:30px}
+.wempty b{display:block;font-size:26px}
+.wempty span{display:block;color:var(--dim);margin-top:12px;font-size:16px;line-height:1.8}
 .pcards{display:grid;gap:14px}
-.pcard{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 18px;cursor:pointer}
-.pcard .who{display:flex;gap:10px;align-items:center;margin-bottom:10px;color:var(--dim)}
-.pcols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.pcols .lab{font-size:12px;letter-spacing:.12em;color:var(--dim);margin-bottom:4px;font-weight:700}
-.pcols p{margin:0 0 10px;line-height:1.65;white-space:pre-wrap}
-.badge{font-size:13px;padding:2px 10px;border-radius:20px;border:1px solid var(--line2)}
+.pcard{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 20px;cursor:pointer}
+.pcard:hover{border-color:var(--line2)}
+.pcard .who{display:flex;gap:10px;align-items:center;margin-bottom:10px;color:#dbe4ec;font-size:17px;font-weight:700}
+.pcols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.pcols .lab{font-size:13px;letter-spacing:.12em;color:var(--dim);margin-bottom:4px;font-weight:700}
+.pcols p{margin:0 0 10px;line-height:1.7;font-size:17px;white-space:pre-wrap}
+.badge{font-size:13px;padding:2px 10px;border-radius:20px;border:1px solid var(--line2);font-weight:700}
 .badge.changed{border-color:var(--warn);color:var(--warn)}
 .badge.part{border-color:var(--cyan);color:var(--cyan)}
 .badge.keep{border-color:var(--ok);color:var(--ok)}
 .dmrow{display:grid;grid-template-columns:140px 1fr auto;gap:12px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}
 .dmrow pre{margin:0;white-space:pre-wrap;font-family:inherit;font-size:13px;color:var(--dim);max-height:96px;overflow:auto}
-@media (max-width:900px){.pcols,.dmrow{grid-template-columns:1fr}}
+@media (max-width:900px){.pcols,.dmrow,.rcmp{grid-template-columns:1fr}}
+@media (max-width:760px){.ctrl{display:none!important}.rbox{padding:16px}}
 
 </style>
 </head>
@@ -437,7 +480,17 @@ document.addEventListener('keydown', e => {
   else if (k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); PAGE.step(-1); render(); }
 });
 
-/* 6. 사후 질문 — 처음 답변을 DM으로 돌려주고, 다시 검토한 근거와 나란히 비교 */
+/* 6. 사후 질문 — 처음 답변을 다시 보고, 바꾸거나 유지한 근거를 쓴다.
+   같은 원본으로 두 화면 (선택 게임 play/choice 구조와 같음):
+   review.html = 멤버·공유 화면 — 이 기기에서 기습질문에 쓴 '내 처음 답변'을 보여주고(같은 폰이면 자동), 생각의 변화·근거를 써서
+                 [제출] → 다시 보기 구글폼으로 자동 제출(응답 시트4). 제출 후 처음 답변과 지금 근거를 나란히 보여준다.
+   review-board.html = 대장님 결과 화면 — 처음 답변과 다시 본 근거를 멤버별로 나란히. 처음 답변(시트1)은 공개하지 않으므로 붙여넣기.
+   해석·평가 문구는 넣지 않는다. 시간 제한 없음. */
+const HOST = false;
+const POST_FORM = 'https://docs.google.com/forms/d/e/1FAIpQLScICrqjs3gGysW9lDhHgsqFjF3LJvBCRZufBWNwpOEpCdkwAg/formResponse';
+const P_NICK = 'entry.317737462', P_CHANGE = 'entry.1876539906', P_REASON = 'entry.715012023', P_AGAIN = 'entry.204985074';
+const CHANGES = ['바뀌었다', '일부 바뀌었다', '바뀌지 않았다'];
+
 function parsePost(t) {
   const ni = nickIdx(t.h);
   const ci = t.h.findIndex(x => /변화/.test(x));
@@ -453,69 +506,110 @@ function pairs() {
   return S.data.post.map((p, i) => ({ p, i, f: m.get(norm(p.nick)) }));
 }
 function dmText(r) {
-  return S.cfg.dm.replace(/\{닉네임\}/g, r.nick || '').replace(/\{답변\}/g, r.text).replace(/\{링크\}/g, formOf('post') || '(폼 링크 미설정)');
+  return S.cfg.dm.replace(/\{닉네임\}/g, r.nick || '').replace(/\{답변\}/g, r.text).replace(/\{링크\}/g, new URL('review.html', location.href).href);
 }
+
+// ---------- 멤버: 내 처음 답변(이 기기) + 다시 보기 ----------
+const FIRST = (() => { try { const a = JSON.parse(localStorage.getItem('bm1025_answer')); if (a && a.v === 1 && a.sent && a.text) return a; } catch (e) {} return null; })();
+const RKEY = 'bm1025_review';
+let R = (() => { try { const r = JSON.parse(localStorage.getItem(RKEY)); if (r && r.v === 1) return r; } catch (e) {} return { v: 1, nick: FIRST ? FIRST.nick : '', change: '', reason: '', again: '', sent: false }; })();
+const rsave = () => { try { localStorage.setItem(RKEY, JSON.stringify(R)); } catch (e) {} };
+const rReady = () => R.nick.trim() && R.change && R.reason.trim();
+function firstBox() {
+  return FIRST
+    ? `<div class="firstbox"><div class="lab">내가 처음 쓴 답변 <span>${esc(FIRST.nick)}</span></div><p>${esc(FIRST.text)}</p></div>`
+    : `<div class="firstbox none"><div class="lab">내가 처음 쓴 답변</div><p>이 기기에서는 처음 답변을 찾지 못했어요. 처음에 다른 기기로 냈다면, 처음 답변을 떠올리며 써 주세요.</p></div>`;
+}
+function memberView(c) {
+  if (R.sent) return `<section class="stage rview"><div class="kicker">다시 보기</div><h1 class="rq">${esc(c.question)}</h1>
+    <div class="rdone"><h2>제출되었습니다</h2><p class="note">${esc(R.nick)}님의 답변이 기록되었습니다. 진행자의 안내를 기다려 주세요.</p>
+      <div class="rcmp"><div class="col first"><div class="lab">처음 답변</div><p>${FIRST ? esc(FIRST.text) : '<i>(이 기기에 없음)</i>'}</p></div>
+        <div class="col now"><div class="lab">다시 보고 <span class="badge ${cat(R.change)}">${esc(R.change)}</span></div><p>${esc(R.reason)}</p>
+        ${R.again ? `<div class="lab">지금 다시 답한다면</div><p>${esc(R.again)}</p>` : ''}</div></div></div></section>`;
+  return `<section class="stage rview"><div class="kicker">다시 보기</div><h1 class="rq">${esc(c.question)}</h1>
+    ${firstBox()}
+    <div class="rbox">
+      <label for="rnick">닉네임 (텔레그램 닉네임 그대로)</label><input type="text" id="rnick" maxlength="40" autocomplete="off" value="${esc(R.nick)}">
+      <label>생각의 변화: 처음 판단과 비교하면</label>
+      <div class="chg">${CHANGES.map(x => `<button class="${R.change === x ? 'on ' + cat(x) : ''}" data-act="rChange" data-v="${esc(x)}">${x}</button>`).join('')}</div>
+      <label for="rreason">바뀌었다면 무엇 때문에, 바뀌지 않았다면 그 이유는?</label><textarea id="rreason" rows="5">${esc(R.reason)}</textarea>
+      <label for="ragain">지금 다시 답한다면 (선택)</label><textarea id="ragain" rows="4">${esc(R.again)}</textarea>
+      <button class="b pri send" id="rsend" data-act="rSend" ${rReady() ? '' : 'disabled'}>제출</button><div class="err" id="rerr" hidden></div>
+    </div></section>`;
+}
+document.addEventListener('input', e => {
+  const k = { rnick: 'nick', rreason: 'reason', ragain: 'again' }[e.target.id]; if (!k) return;
+  R[k] = e.target.value; rsave();
+  const b = $('#rsend'); if (b) b.disabled = !rReady();
+});
+
+// ---------- 대장님: 처음 답변 ↔ 다시 본 근거 ----------
+function hostView() {
+  const ps = pairs(), counts = { changed: 0, part: 0, keep: 0 };
+  ps.forEach(x => { const k = cat(x.p.change); if (k) counts[k]++; });
+  const top = `<div class="wtop"><div class="wtitle"><div><h2>처음 답변과 다시 본 근거</h2>
+      <span class="winfo">응답 ${ps.length}명 · 바뀌었다 ${counts.changed} · 일부 바뀌었다 ${counts.part} · 바뀌지 않았다 ${counts.keep}</span></div></div>
+    <div class="wbtns"><button class="tbtn reload" data-act="pasteOpen" data-k="q1">📋 처음 답변 붙여넣기 ${S.data.q1.length ? `<small>${S.data.q1.length}</small>` : ''}</button>
+      <button class="tbtn reload" data-act="pasteOpen" data-k="post">📋 다시 보기 붙여넣기 ${S.data.post.length ? `<small>${S.data.post.length}</small>` : ''}</button></div></div>`;
+  const empty = !ps.length ? `<div class="wempty"><b>아직 응답을 불러오지 않았습니다</b><span>① [📋 처음 답변 붙여넣기]: 응답 시트 "설문지 응답 시트1" 탭<br>② [📋 다시 보기 붙여넣기]: "설문지 응답 시트4" 탭<br>각 탭에서 <kbd>Ctrl</kbd>+<kbd>A</kbd> → <kbd>Ctrl</kbd>+<kbd>C</kbd> 해서 붙여넣으세요</span></div>` : '';
+  return `<section class="stage wallview">${top}<p class="whint">카드를 누르면 크게 볼 수 있어요.</p>
+    <div class="pcards">${ps.map(x => `<div class="pcard" data-act="zoom" data-i="${x.i}">
+      <div class="who"><span>${esc(x.p.nick || '(닉네임 없음)')}</span><span class="badge ${cat(x.p.change)}">${esc(x.p.change || '-')}</span></div>
+      <div class="pcols"><div><div class="lab">처음 답변</div><p>${x.f ? esc(x.f.text) : '<i style="color:var(--warn)">처음 답변 없음 (처음 답변 붙여넣기 또는 닉네임 확인)</i>'}</p></div>
+      <div><div class="lab">바꾸거나 유지한 근거</div><p>${esc(x.p.reason)}</p>${x.p.again ? `<div class="lab">지금 다시 답한다면</div><p>${esc(x.p.again)}</p>` : ''}</div></div></div>`).join('')}</div>${empty}</section>`;
+}
+
 Object.assign(ACT, {
-  mode: b => { U.mode = b.dataset.m; render(); },
-  filter: b => { U.filter = b.dataset.f; render(); },
+  rChange: b => { R.change = b.dataset.v; rsave(); render(); },
+  rSend: b => {
+    if (!rReady() || !confirm('제출할까요? 제출한 뒤에는 고칠 수 없습니다.')) return;
+    b.disabled = true; b.textContent = '제출 중…';
+    const p = new URLSearchParams(); p.append(P_NICK, R.nick.trim()); p.append(P_CHANGE, R.change); p.append(P_REASON, R.reason.trim()); if (R.again.trim()) p.append(P_AGAIN, R.again.trim());
+    fetch(POST_FORM, { method: 'POST', mode: 'no-cors', body: p })
+      .then(() => { R.sent = true; rsave(); render(); window.scrollTo(0, 0); })
+      .catch(() => { b.disabled = false; b.textContent = '다시 제출'; const e = $('#rerr'); e.hidden = false; e.textContent = '제출하지 못했습니다. 인터넷 연결을 확인하고 다시 눌러주세요. (쓴 내용은 그대로 남아 있습니다)'; });
+  },
+  // 붙여넣기 칸 열기 (붙여넣으면 저절로 닫힌다)
+  pasteOpen: b => { U.ops = true; U.opsTab = 'data'; U.pk = b.dataset.k; render(); setTimeout(() => { const t = $(`textarea[data-raw="${b.dataset.k}"]`); if (t) { t.value = ''; t.focus(); t.scrollIntoView({ block: 'center' }); } }, 50); },
   copyDm: b => copyText(dmText(S.data.q1[+b.dataset.i])),
   zoom: b => {
     const x = pairs().find(p => p.i === +b.dataset.i); if (!x) return;
-    openModal(`<div class="kicker">${who(x.p.nick, x.i)} · ${esc(x.p.change)}</div><div class="reps" style="margin-top:14px">
+    openModal(`<div class="kicker">${esc(x.p.nick)} · ${esc(x.p.change)}</div><div class="reps" style="margin-top:14px">
       <blockquote><cite style="margin:0 0 6px">처음 답변</cite>${x.f ? esc(x.f.text) : '(찾지 못함)'}</blockquote>
       <blockquote style="border-color:var(--warn)"><cite style="margin:0 0 6px">바꾸거나 유지한 근거</cite>${esc(x.p.reason)}</blockquote>
       ${x.p.again ? `<blockquote><cite style="margin:0 0 6px">지금 다시 답한다면</cite>${esc(x.p.again)}</blockquote>` : ''}</div>
       <div class="modal-btns"><button class="b pri" data-act="closeModal">닫기 (Esc)</button></div>`);
   }
 });
+document.addEventListener('paste', e => {
+  const ta = e.target.closest && e.target.closest('textarea[data-raw]'); if (!ta || !HOST) return;
+  setTimeout(() => { const k = ta.dataset.raw; if (S.data[k] && S.data[k].length) { U.ops = false; render(); toast(S.data[k].length + '명 불러옴'); } }, 120);
+});
 
 setPage({
   key: 'bm1025_6',
-  timer: 'post',
+  noNav: true,
   cfg: {
     form: '',
     question: '처음 내린 판단을 다시 검토해 보세요. 생각이 바뀌었다면 무엇 때문에 바뀌었나요? 바뀌지 않았다면 그 이유는 무엇인가요?',
-    dm: '{닉네임}님, 처음 5분 질문에 쓰신 답변입니다.\n\n「{답변}」\n\n천천히 다시 읽어보시고 아래 링크에 답해주세요.\n{링크}',
-    minutes: 5
+    dm: '{닉네임}님, 처음 5분 질문에 쓰신 답변입니다.\n\n「{답변}」\n\n천천히 다시 읽어보시고 아래 링크에서 다시 보기에 답해주세요.\n{링크}'
   },
   fresh: () => ({ raw: { q1: '', post: '' }, data: { q1: [], post: [] } }),
-  ui: { mode: 'ask', filter: 'all' },
+  ui: {},
   parsers: { q1: parseQ1, post: parsePost },
-  step(d) { U.mode = d > 0 ? 'cmp' : 'ask'; },
-  view() {
-    const c = S.cfg;
-    if (U.mode === 'ask') return `<section class="stage two ask"><div>
-        <div class="kicker">다시 보기</div><h1>${esc(c.question)}</h1>
-        <p class="help" style="font-size:16px;margin-top:18px">처음에 쓴 답변은 개인 DM으로 보내드렸습니다. 먼저 다시 읽어보세요.</p></div>
-      <aside class="side">${timerBox('post', c.minutes)}${qrBox(formOf('post'), '답변 제출')}</aside></section>
-      ${ctrl(`<button class="b pri" data-act="mode" data-m="cmp">비교 보기 →</button>`)}`;
-    const ps = pairs(), counts = { changed: 0, part: 0, keep: 0 };
-    ps.forEach(x => { const k = cat(x.p.change); if (k) counts[k]++; });
-    const fb = (f, l) => `<button class="b ${U.filter === f ? 'on' : ''}" data-act="filter" data-f="${f}">${l}</button>`;
-    return `<section class="stage"><div class="stats" style="margin-bottom:18px">
-        <div class="stat"><b>${ps.length}</b><span>응답</span></div><div class="stat"><b>${counts.changed}</b><span>바뀌었다</span></div>
-        <div class="stat"><b>${counts.part}</b><span>일부 바뀌었다</span></div><div class="stat"><b>${counts.keep}</b><span>바뀌지 않았다</span></div></div>
-      <div class="pcards">${ps.filter(x => U.filter === 'all' || cat(x.p.change) === U.filter).map(x => `<div class="pcard" data-act="zoom" data-i="${x.i}">
-        <div class="who"><span>${who(x.p.nick, x.i)}</span><span class="badge ${cat(x.p.change)}">${esc(x.p.change || '-')}</span></div>
-        <div class="pcols"><div><div class="lab">처음 답변</div><p>${x.f ? esc(x.f.text) : '<i style="color:var(--warn)">처음 답변을 찾지 못함 (닉네임 확인)</i>'}</p></div>
-        <div><div class="lab">바꾸거나 유지한 근거</div><p>${esc(x.p.reason)}</p>${x.p.again ? `<div class="lab">지금 다시 답한다면</div><p>${esc(x.p.again)}</p>` : ''}</div></div></div>`).join('')
-        || '<p class="help">아직 불러온 응답이 없습니다. <kbd>O</kbd> 운영 화면에서 응답을 붙여넣으세요.</p>'}</div></section>
-      ${ctrl(`<button class="b" data-act="mode" data-m="ask">← 질문 화면</button>${fb('all', '전체')}${fb('changed', '바뀌었다')}${fb('part', '일부')}${fb('keep', '유지')}
-        <button class="b" data-act="anon">${U.anon ? '이름 표시' : '이름 숨김'}</button>`)}`;
-  },
+  step() {},
+  view() { return HOST ? hostView() : memberView(S.cfg); },
   opsTabs: [
-    ['data', '응답 불러오기', () => dataBox('q1', '① 처음 답변 — 1번 질문 폼의 응답 시트') + dataBox('post', '② 다시 보기 응답 — 다시 보기 폼의 응답 시트')],
-    ['dm', '처음 답변 DM', () => {
+    ['data', '응답 불러오기', () => dataBox('q1', '① 처음 답변 — 응답 시트 "설문지 응답 시트1" 탭') + dataBox('post', '② 다시 보기 응답 — 응답 시트 "설문지 응답 시트4" 탭')],
+    ['dm', '처음 답변 DM (다른 기기로 낸 멤버용)', () => {
       const posted = new Set(S.data.post.map(p => norm(p.nick)));
-      return `<div class="box"><h3>DM 문구</h3><p class="help">{닉네임} {답변} {링크}가 자동으로 바뀝니다. 링크는 설정의 폼 링크.</p>
+      return `<div class="box"><h3>DM 문구</h3><p class="help">처음 답변을 다른 기기로 낸 멤버에게만 보내면 됩니다. {닉네임} {답변} {링크}가 자동으로 바뀝니다.</p>
         <textarea rows="5" data-cfg="dm">${esc(S.cfg.dm)}</textarea></div>
         <div class="box"><h3>멤버별 DM (${S.data.q1.length}명)</h3><p class="help">[복사] → 텔레그램에서 그 멤버 개인 DM에 붙여넣기. ✓는 다시 보기 응답을 낸 사람.</p>
         ${S.data.q1.map((r, i) => `<div class="dmrow"><b>${esc(r.nick || '(닉네임 없음)')} ${posted.has(norm(r.nick)) ? '<span class="ok">✓</span>' : ''}</b><pre>${esc(dmText(r))}</pre>
           <button class="b" data-act="copyDm" data-i="${i}">복사</button></div>`).join('') || '<p class="help">먼저 [응답 불러오기]에서 ① 처음 답변을 불러오세요.</p>'}</div>`;
     }],
-    ['cfg', '설정', () => `<div class="box"><h3>폼 링크 · 문구</h3><div class="fgrid">
-      ${fld('form', '구글폼 응답 링크', { help: '구글폼_만들기.gs 실행 로그의 [6 다시 보기] 응답 링크' })}
-      ${fld('question', '질문', { ta: 3 })}${fld('minutes', '타이머(분)')}</div></div>${backupBox()}`]
+    ['cfg', '설정', () => `<div class="box"><h3>문구</h3><div class="fgrid">${fld('question', '질문', { ta: 3 })}</div></div>${backupBox()}`]
   ]
 });
 
