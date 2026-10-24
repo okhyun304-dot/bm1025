@@ -72,6 +72,29 @@ input[type=text]:focus{border-color:var(--cyan)}
 .path-l{display:flex;justify-content:center;gap:6px;font-size:11px;color:var(--dim)}
 .path-l span{width:44px;text-align:center}
 #app.still *{animation:none!important}
+/* 단서 보드 */
+.cap.sit{font-size:18px;padding:14px 16px}
+.slots{display:flex;gap:6px}.slots i{width:22px;height:8px;background:#2d3b48;transform:skewX(-20deg)}.slots i.on{background:var(--cyan);box-shadow:0 0 8px rgba(88,168,255,.7)}
+.board{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:2px 0 6px}
+.card{background:rgba(8,11,14,.84);border:1px solid #23313e;padding:10px 12px;min-height:92px}
+.card .cl{font-size:11px;letter-spacing:.14em;color:var(--dim);display:flex;justify-content:space-between;align-items:center}
+.card .cl b{font-size:10px;letter-spacing:.1em;color:#04121f;background:var(--cyan);padding:1px 6px}
+.card .ct{font-size:15px;line-height:1.5;margin-top:6px;color:#f2f4f6}
+.card.new{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan),0 0 18px rgba(88,168,255,.35)}
+.card.lock{background:rgba(8,11,14,.5);border-style:dashed;border-color:#2f3d4a}
+.card .cq{font-size:30px;font-weight:300;color:#3f5163;text-align:center;margin-top:6px}
+/* 정보 공개 장면 */
+.reveal{min-height:calc(100vh - 80px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px 0}
+.reveal .rk{font-size:13px;letter-spacing:.3em;color:var(--cyan);animation:fadein .4s ease-out}
+.reveal .rn{font-size:54px;font-weight:300;margin:4px 0 18px;animation:fadein .4s ease-out}
+.reveal .rn span{font-size:24px;color:var(--dim)}
+.rcard{width:100%;max-width:440px;background:rgba(8,11,14,.9);border:1px solid var(--cyan);box-shadow:0 0 28px rgba(88,168,255,.35);padding:22px 20px;animation:flip .7s ease-out both;transform-origin:center}
+.rcl{font-size:12px;letter-spacing:.16em;color:var(--cyan);margin-bottom:10px}
+.rct{font-size:22px;line-height:1.55}
+@keyframes flip{0%{opacity:0;transform:perspective(800px) rotateY(90deg) scale(.9)}60%{opacity:1;transform:perspective(800px) rotateY(-8deg)}100%{transform:perspective(800px) rotateY(0)}}
+@keyframes fadein{from{opacity:0;transform:translateY(-6px)}}
+.reveal .slots{margin:22px 0 4px}
+.rgo{max-width:440px;margin-top:22px;animation:fadein .4s ease-out .7s both}
 /* 내 선택 플로차트 */
 .flow{margin:22px 0 4px;background:#d2d2d2;background-image:linear-gradient(120deg,rgba(255,255,255,.18) 0 30%,transparent 30% 60%,rgba(0,0,0,.04) 60%);padding:14px 10px 6px;text-align:left}
 .flh{font-size:13px;letter-spacing:.14em;color:#1d4f91;font-weight:700;margin:0 4px 4px}
@@ -151,24 +174,37 @@ function dots() {
 }
 
 // still = 같은 단계에서 다시 그릴 때(C 이유 칸 열기): 애니메이션·맨 위 이동 없이
+function slots(n) {
+  var h = '';
+  for (var i = 0; i < 4; i++) h += '<i class="' + (i < n ? 'on' : '') + '"></i>';
+  return '<div class="slots">' + h + '</div>';
+}
+// 정보 공개 장면: 선택하고 나면 새 정보 카드가 뒤집히며 나타나고, [판단하기]로 선택 장면에 들어간다
+function renderReveal() {
+  var st = S.step;
+  app.innerHTML = '<div class="reveal"><div class="rk">새로운 정보</div><div class="rn">' + st + ' <span>/ 4</span></div>' +
+    '<div class="rcard"><div class="rcl">정보 ' + st + '</div><div class="rct">' + esc(G.infos[st - 1]) + '</div></div>' +
+    slots(st) + '<button class="btn rgo" id="go">판단하기 →</button></div>';
+  window.scrollTo(0, 0);
+  document.getElementById('go').addEventListener('click', function () { S.reveal = false; save(); render(); });
+}
+// 선택 장면: 상황 + 단서 보드(정보 카드 4장, 모은 것만 열림) + 선택지
 function render(still) {
   app.classList.toggle('still', !!still);
   if (S.sent || S.step >= 5) return renderEnd();
   if (S.step < 0) return renderIntro();
+  if (S.reveal && S.step > 0) return renderReveal();
   var st = S.step;
-  var h = '<div class="top"><span>정보 <b>' + st + '/4</b></span>' + dots() + '</div>';
-  h += '<div class="cap"><span class="tag">상황</span>' + esc(G.situation) + '</div>';
-  if (st > 0) {
-    if (st > 1) {
-      h += '<div class="log">';
-      for (var i = 0; i < st - 1; i++) h += '<div class="it">' + (i + 1) + '. ' + esc(G.infos[i]) + '</div>';
-      h += '</div>';
-    }
-    h += '<div class="notice"><i>▲</i>새로운 정보가 공개되었습니다</div>';
-    h += '<div class="cap clue"><span class="tag">새로운 정보 ' + st + '/4</span>' + esc(G.infos[st - 1]) + '</div>';
+  var h = '<div class="top"><span>정보 <b>' + st + '/4</b></span>' + slots(st) + '</div>';
+  h += '<div class="cap sit"><span class="tag">상황</span>' + esc(G.situation) + '</div>';
+  h += '<div class="board">';
+  for (var i = 0; i < 4; i++) {
+    if (i < st) h += '<div class="card' + (i === st - 1 ? ' new' : '') + '"><div class="cl">정보 ' + (i + 1) + (i === st - 1 ? '<b>NEW</b>' : '') + '</div><div class="ct">' + esc(G.infos[i]) + '</div></div>';
+    else h += '<div class="card lock"><div class="cl">정보 ' + (i + 1) + '</div><div class="cq">?</div></div>';
   }
+  h += '</div>';
   h += '<div class="pr">' + (st === 0 ? '이 선택은 무엇일까요?' : '판단을 유지할까요, 수정할까요?') +
-    '<small>' + (st === 0 ? '하나를 눌러 고르세요' : '그대로라면 같은 것을 누르면 됩니다') + '</small></div>';
+    '<small>' + (st === 0 ? '하나를 눌러 고르세요 · 고르면 정보가 하나씩 공개됩니다' : '그대로라면 같은 것을 누르면 됩니다') + '</small></div>';
   h += '<div class="choices">';
   ['A', 'B', 'C'].forEach(function (k) {
     var prev = st > 0 && S.picks[st - 1] === k;
@@ -248,7 +284,7 @@ function renderEnd() {
   var ag = document.getElementById('again');
   if (ag) ag.addEventListener('click', function () {
     if (!confirm('처음부터 다시 할까요? 끝까지 다시 하면 새 선택으로 바뀝니다.')) return;
-    S = { v: 1, nick: S.nick, step: -1, picks: [], reasons: [], pending: null, sent: false }; save(); render();
+    S = { v: 1, nick: S.nick, step: -1, picks: [], reasons: [], pending: null, sent: false, reveal: false }; save(); render();
   });
 }
 
@@ -258,7 +294,7 @@ function pick(k) {
   if (k === 'C' && S.pending !== 'C') { S.pending = 'C'; save(); render(true); return; }
   if (k === 'C') { var w = document.getElementById('why'); S.reasons[st] = w ? w.value.trim() : ''; }
   else S.reasons[st] = '';
-  S.picks[st] = k; S.pending = null; S.step = st + 1; save();
+  S.picks[st] = k; S.pending = null; S.step = st + 1; S.reveal = S.step < 5; save();
   if (S.step >= 5) { render(); submit(); } else render();
 }
 
