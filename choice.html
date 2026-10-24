@@ -588,14 +588,15 @@ const BOKEH = [[1150, 240, 60, '#3a8bd6'], [1320, 170, 40, '#5fd0ff'], [1460, 32
 // 자동 불러오기: 응답 시트 "설문지 응답 시트3"을 [웹에 게시 → CSV]한 주소(_src/설정.json 의 forms.miniCsv).
 // 화면을 열면 바로, 그 뒤 15초마다 다시 읽고, A 키로 즉시 다시 읽는다. (주소가 없으면 O → 붙여넣기)
 const SHEET_CSV = FORMS.miniCsv || '';
-let loadErr = '', loadedAt = '';
+// 구글 웹 게시본은 서버마다 최신본·옛날본이 섞여 올 수 있다 → 이 화면을 연 뒤 본 것보다 줄 수가 적으면 옛날본으로 보고 무시
+let loadErr = '', loadedAt = '', maxRows = -1;
 async function autoLoad(manual) {
   if (!SHEET_CSV) { if (manual) toast('시트 자동 연결 주소가 아직 없습니다'); return; }
   try {
     const r = await fetch(SHEET_CSV + (SHEET_CSV.includes('?') ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store' });
     if (!r.ok) throw new Error(r.status);
-    const text = await r.text(), t = table(text);
-    S.raw.mini = text; S.data.mini = t ? parseMini(t).out : []; save();
+    const text = await r.text(), t = table(text), rows = t ? t.rows.length : 0;
+    if (rows >= maxRows) { maxRows = rows; S.raw.mini = text; S.data.mini = t ? parseMini(t).out : []; save(); }
     loadErr = ''; loadedAt = new Date().toTimeString().slice(0, 5);
     if (manual) toast(S.data.mini.length + '명 불러옴');
   } catch (e) { loadErr = '시트를 불러오지 못했습니다 (인터넷 확인)'; if (manual) toast(loadErr); }
