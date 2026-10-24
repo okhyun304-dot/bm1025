@@ -174,9 +174,15 @@ function renderEnd() {
   h += '<div class="path">' + S.picks.map(function (k, i) { return (i ? '<span>›</span>' : '') + '<i class="' + k + '">' + k + '</i>'; }).join('') + '</div>';
   h += '<div class="path-l"><span>처음</span><span>1</span><span>2</span><span>3</span><span>4</span></div>';
   h += '<p>' + esc(S.nick) + '님의 선택이 기록되었습니다.<br>진행자의 안내를 기다려 주세요.</p>';
+  if (S.sent) h += '<button class="btn ghost" id="again">처음부터 다시 하기</button>';
   if (!S.sent) h += '<div class="err" id="err" hidden>제출하지 못했습니다. 인터넷 연결을 확인하고 다시 눌러주세요.</div><button class="btn ghost" id="retry" hidden>다시 보내기</button>';
   app.innerHTML = h + '</div>';
   if (!S.sent) { var r = document.getElementById('retry'); if (r) r.addEventListener('click', submit); }
+  var ag = document.getElementById('again');
+  if (ag) ag.addEventListener('click', function () {
+    if (!confirm('처음부터 다시 할까요? 끝까지 다시 하면 새 선택으로 바뀝니다.')) return;
+    S = { v: 1, nick: S.nick, step: -1, picks: [], reasons: [], pending: null, sent: false }; save(); render();
+  });
 }
 
 // A·B는 누르면 바로 확정. C는 한 줄 이유 칸을 연 뒤 [이걸로 선택](또는 C 다시 누르기)으로 확정
