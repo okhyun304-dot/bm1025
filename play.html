@@ -88,12 +88,13 @@ input[type=text]:focus{border-color:var(--cyan)}
 .reveal .rk{font-size:13px;letter-spacing:.3em;color:var(--cyan);animation:fadein .4s ease-out}
 .reveal .rn{font-size:54px;font-weight:300;margin:4px 0 18px;animation:fadein .4s ease-out}
 .reveal .rn span{font-size:24px;color:var(--dim)}
-.rcard{width:100%;max-width:440px;background:rgba(8,11,14,.9);border:1px solid var(--cyan);box-shadow:0 0 28px rgba(88,168,255,.35);padding:22px 20px;animation:flip .7s ease-out both;transform-origin:center}
+.rcard{width:100%;max-width:440px;background:#0b1117;border:1px solid var(--cyan);box-shadow:0 0 28px rgba(88,168,255,.35);padding:22px 20px;animation:flip .7s ease-out both;transform-origin:center}
 .rcl{font-size:12px;letter-spacing:.16em;color:var(--cyan);margin-bottom:10px}
 .rct{font-size:22px;line-height:1.55}
 @keyframes flip{0%{opacity:0;transform:perspective(800px) rotateY(90deg) scale(.9)}60%{opacity:1;transform:perspective(800px) rotateY(-8deg)}100%{transform:perspective(800px) rotateY(0)}}
 @keyframes fadein{from{opacity:0;transform:translateY(-6px)}}
 .reveal .slots{margin:22px 0 4px}
+body.revealing .figure{opacity:.07}
 .rgo{max-width:440px;margin-top:22px;animation:fadein .4s ease-out .7s both}
 /* 내 선택 플로차트 */
 .flow{margin:22px 0 4px;background:#d2d2d2;background-image:linear-gradient(120deg,rgba(255,255,255,.18) 0 30%,transparent 30% 60%,rgba(0,0,0,.04) 60%);padding:14px 10px 6px;text-align:left}
@@ -191,6 +192,7 @@ function renderReveal() {
 // 선택 장면: 상황 + 단서 보드(정보 카드 4장, 모은 것만 열림) + 선택지
 function render(still) {
   app.classList.toggle('still', !!still);
+  document.body.classList.toggle('revealing', !!(S.reveal && S.step > 0 && S.step < 5 && !S.sent));
   if (S.sent || S.step >= 5) return renderEnd();
   if (S.step < 0) return renderIntro();
   if (S.reveal && S.step > 0) return renderReveal();
