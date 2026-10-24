@@ -40,7 +40,6 @@ body.present .ctrl{display:none}
 .ctrl .key{display:inline-flex;gap:4px;align-items:center}
 .ctrl .key em{font-style:normal;font-size:14px;color:#c9d6e2;margin-left:4px}
 .ctrl kbd{min-width:24px;text-align:center;padding:2px 7px;font-size:13px;font-weight:700;background:#1d3247;border-color:#3f6a8f;color:#fff}
-.b.opsbtn{border-color:var(--line2);color:var(--dim);display:inline-flex;gap:8px;align-items:center}
 .b{background:var(--panel2);border:1px solid var(--line2);color:var(--text);padding:7px 14px;border-radius:4px;font-size:14px}
 .b:hover{border-color:var(--cyan2)}
 .b.pri{background:var(--cyan2);border-color:var(--cyan);color:#001a26;font-weight:700}
@@ -277,8 +276,7 @@ function ctrl(inner) {
   const keys = [['←', '→', '이전 · 다음'], ['T', '타이머'], ['F', '전체화면'], ['P', '이 줄 숨기기']]
     .filter(k => k[0] !== 'T' || PAGE.timer)
     .map(k => `<span class="key">${k.slice(0, -1).map(x => `<kbd>${x}</kbd>`).join('')}<em>${k[k.length - 1]}</em></span>`).join('');
-  return `<div class="ctrl"><div class="acts">${inner}</div><div class="hint">${keys}</div>
-    <button class="b opsbtn" data-act="ops">${(PAGE.opsLabel || '운영 (O)').replace(/\s*\(O\)/, '')} <kbd>O</kbd></button></div>`;
+  return `<div class="ctrl"><div class="acts">${inner}</div><div class="hint">${keys}</div></div>`;
 }
 
 /* ---------- 응답 붙여넣기 ---------- */
