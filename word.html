@@ -127,7 +127,7 @@ label.file input{display:none}
 .rulemain h1{font-size:clamp(22px,2.4vw,36px);line-height:1.5;margin-bottom:22px}
 .mybox{margin-top:26px;background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:20px 22px}
 .mybox h2{font-size:20px;margin:0 0 4px}
-.mybox .note{font-size:14px;color:var(--dim);margin:0 0 6px;line-height:1.6}
+.mybox .note{font-size:15px;color:#b8c7d4;margin:0 0 6px;line-height:1.6;text-align:left}
 .mybox label{display:block;font-size:15px;color:#dbe4ec;margin:16px 0 7px}
 .mybox label b{font-size:18px}
 .mybox input,.mybox textarea{font-size:17px;padding:11px 13px}
@@ -162,18 +162,20 @@ mark.ban{background:rgba(255,93,108,.25);color:#ffb3ba;border-bottom:2px solid v
 .tbtn.main{background:var(--cyan2);border-color:var(--cyan);color:#001a26}
 .tbtn kbd{font-size:13px;margin-left:4px}
 .whint{color:var(--dim);font-size:14px;margin:0 0 14px}
-.wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;padding-bottom:90px}
+.wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:14px;padding-bottom:90px}
 .bcard{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px;cursor:pointer;transition:border-color .15s}
 .bcard:hover{border-color:var(--line2)}
 .bcard.sel{border-color:var(--cyan);box-shadow:0 0 0 2px var(--cyan)}
-.bcard .who{color:#dbe4ec;font-size:15px;font-weight:700;margin-bottom:4px;display:flex;justify-content:space-between}
+.bcard .who{color:#dbe4ec;font-size:17px;font-weight:700;margin-bottom:4px;display:flex;justify-content:space-between}
 .bcard .who .picked{color:var(--cyan);font-size:13px}
-.bcard .ln{display:flex;gap:10px;margin-top:8px;line-height:1.65;font-size:17px;white-space:pre-wrap}
-.bcard .ln b{flex:0 0 auto;font-size:18px}
+.bcard .ln{display:flex;gap:10px;margin-top:8px;line-height:1.65;font-size:19px;white-space:pre-wrap}
+.bcard .ln b{flex:0 0 auto;font-size:20px;font-weight:900}
 .compare{display:grid;gap:18px;margin-top:10px}
 .compare .bcard{cursor:default}
-.compare .bcard .who{font-size:20px}
-.compare .bcard .ln{font-size:clamp(19px,1.7vw,26px)}
+.compare .bcard{padding:22px 26px}
+.compare .bcard .who{font-size:24px;margin-bottom:8px}
+.compare .bcard .ln b{font-size:30px}
+.compare .bcard .ln{font-size:clamp(22px,2vw,32px);gap:14px;margin-top:14px}
 .wempty{max-width:760px;margin:60px auto;text-align:center;background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:30px}
 .wempty b{display:block;font-size:26px}
 .wempty span{display:block;color:var(--dim);margin-top:10px;font-size:16px}
