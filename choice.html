@@ -628,6 +628,8 @@ document.addEventListener('keydown', e => {
   if (e.key === 'a' || e.key === 'A' || e.key === 'ㅁ') autoLoad(true);
 });
 
+// 결과 칸의 짧은 이름 (오키 결정 10/25: '진정한/방어적' 대신). 선택지 원문 문장은 그대로
+const SHORT = { A: '적성 발견', B: '실패 회피', C: '다른 설명' };
 function result() {
   const s = stats(), m = S.cfg;
   const X = i => 90 + i * 300, Y = { A: 330, B: 480, C: 630 }, W = 200;
@@ -642,7 +644,7 @@ function result() {
     const tot = s.cnt[i].A + s.cnt[i].B + s.cnt[i].C;
     return `<div class="colh" style="left:${X(i)}px">${c}</div>` + ['A', 'B', 'C'].map(k => {
       const n = s.cnt[i][k], pct = tot ? Math.round(n / tot * 100) : 0;
-      return `<div class="rnode ${n ? '' : 'zero'}" style="left:${X(i)}px;top:${Y[k] - 22}px"><div class="rbar"><span class="k">${k}</span>${esc(m.short[k])}<span class="pct"><b>${pct}<small>%</small></b></span></div><div class="rsub">${n}명</div></div>`;
+      return `<div class="rnode ${n ? '' : 'zero'}" style="left:${X(i)}px;top:${Y[k] - 22}px"><div class="rbar"><span class="k">${k}</span>${esc(SHORT[k])}<span class="pct"><b>${pct}<small>%</small></b></span></div><div class="rsub">${n}명</div></div>`;
     }).join('');
   }).join('');
   const mat = `<table class="rmat"><tr><th>처음 \\ 마지막</th>${['A', 'B', 'C'].map(k => `<th>${k}</th>`).join('')}</tr>
@@ -686,7 +688,6 @@ setPage({
     A: '자신의 적성과 가치를 발견한 진정한 선택이다',
     B: '학업 실패를 피하기 위한 방어적 선택이다',
     C: '다른 설명이 가능하다',
-    short: { A: '진정한 선택', B: '방어적 선택', C: '다른 설명' },
     infos: [
       '학생은 과거 입시에 여러 번 실패했습니다.',
       '게임 개발을 1년 이상 꾸준히 해왔습니다.',
@@ -711,7 +712,6 @@ setPage({
     ['cfg', '설정', () => `<div class="box"><h3>폼 링크 · 문구</h3><div class="fgrid">
       ${fld('form', '구글폼 응답 링크', { help: '구글폼_만들기.gs 실행 로그의 [5 선택 게임] 응답 링크' })}
       ${fld('situation', '상황', { ta: 2, help: '**글자**로 감싸면 굵게 표시됩니다' })}${fld('A', 'A')}${fld('B', 'B')}${fld('C', 'C')}
-      ${fld('short.A', '결과 화면 A 이름')}${fld('short.B', '결과 화면 B 이름')}${fld('short.C', '결과 화면 C 이름')}
       ${[0, 1, 2, 3].map(i => fld(`infos.${i}`, `정보 ${i + 1}`)).join('')}</div></div>${backupBox()}`]
   ]
 });
