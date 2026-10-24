@@ -104,6 +104,8 @@ var G = {
 };
 
 var KEY = 'bm1025_play';
+// 테스트용: 주소 끝에 ?reset 을 붙이면 이 기기의 기록을 지우고 처음부터 (멤버에게는 알리지 않음)
+if (/[?&]reset/.test(location.search)) { try { localStorage.removeItem(KEY); } catch (e) {} history.replaceState(null, '', location.pathname); }
 var S = load();
 function load() {
   try { var s = JSON.parse(localStorage.getItem(KEY)); if (s && s.v === 1) return s; } catch (e) {}
