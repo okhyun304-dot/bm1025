@@ -126,13 +126,30 @@ label.file input{display:none}
 .qpair .qtext{font-size:clamp(17px,1.5vw,24px)}
 .qpair>div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:20px 24px}
 @media (max-width:900px){.qpair{grid-template-columns:1fr}}
-/* 위쪽 큰 버튼 */
-.qtop{display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap;max-width:1500px;margin:0 auto 10px}
-.seg{display:flex;border:1px solid var(--line2);border-radius:6px;overflow:hidden}
-.seg button{font:inherit;font-size:16px;font-weight:700;padding:11px 18px;background:var(--panel);color:var(--dim);border:0;cursor:pointer}
-.seg button+button{border-left:1px solid var(--line2)}
-.seg button.on{background:var(--cyan2);color:#001a26}
-.quote{min-height:calc(100vh - 140px)}
+/* 위: 문장 탭(왼쪽) · 단계 표시(오른쪽) */
+.qtop{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;max-width:1200px;margin:0 auto 6px}
+.qtabs{display:flex;gap:4px}
+.qtabs button{font:inherit;font-size:16px;font-weight:700;padding:8px 14px;background:none;color:var(--dim);border:0;border-bottom:3px solid transparent;cursor:pointer}
+.qtabs button.on{color:var(--text);border-bottom-color:var(--cyan)}
+.qtabs small{font-size:12px;font-weight:500;color:var(--dim)}
+.qsteps{display:flex;align-items:center;list-style:none;margin:0;padding:0}
+.qsteps li{display:flex;align-items:center}
+.qsteps li+li::before{content:'';width:34px;height:2px;background:var(--line2);margin:0 6px}
+.qsteps li.done+li::before,.qsteps li.on::before{background:var(--cyan2)}
+.qsteps button{display:flex;white-space:nowrap;align-items:center;gap:8px;font:inherit;font-size:16px;font-weight:700;color:var(--dim);background:none;border:0;padding:4px;cursor:pointer}
+.qsteps b{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;border:2px solid var(--line2);font-size:15px}
+.qsteps li.done button{color:var(--text)}
+.qsteps li.done b{border-color:var(--cyan2);color:var(--cyan)}
+.qsteps li.on button{color:var(--cyan)}
+.qsteps li.on b{background:var(--cyan2);border-color:var(--cyan);color:#001a26}
+/* 아래: 이전 · 다음 */
+.qnav{display:flex;justify-content:space-between;align-items:center;margin-top:28px}
+.qnav button{font:inherit;font-weight:700;cursor:pointer;border-radius:8px}
+.qprev{font-size:16px;padding:12px 18px;background:none;color:var(--dim);border:1px solid var(--line2)}
+.qnext{font-size:20px;padding:14px 26px;background:var(--cyan2);color:#001a26;border:1px solid var(--cyan)}
+.qnext:hover{filter:brightness(1.1)}
+.quote{min-height:calc(100vh - 120px)}
+@media (max-width:700px){.qsteps li+li::before{width:10px;margin:0 3px}.qsteps button{font-size:13px;gap:5px;padding:2px}.qsteps b{width:24px;height:24px;font-size:13px}.qnext{font-size:17px;padding:12px 18px}}
 
 </style>
 </head>
@@ -464,16 +481,20 @@ setPage({
   step(d) { U.step = Math.max(0, Math.min(2, U.step + d)); },
   view() {
     const qs = S.cfg.quotes, q = qs[U.idx] || qs[0];
-    // 위쪽 큰 버튼 (아래 조작줄 없음) — 키보드 → ← 로도 넘김
-    const bar = `<div class="qtop">${qs.length > 1 ? `<div class="seg">${qs.map((x, i) => `<button class="${i === U.idx ? 'on' : ''}" data-act="idx" data-i="${i}">문장 ${i + 1}</button>`).join('')}</div>` : ''}
-      <div class="seg">${['① 이름 가림', '② 이름 공개', '③ 나란히'].map((l, i) => `<button class="${U.step === i ? 'on' : ''}" data-act="setStep" data-s="${i}">${l}</button>`).join('')}</div></div>`;
+    // 위: 왼쪽 문장 탭 · 오른쪽 단계 표시(①→②→③) / 아래: 이전·다음 큰 버튼 — 키보드 → ← 로도 넘김
+    const STEPS = ['이름 가림', '이름 공개', '나란히'];
+    const tabs = qs.length > 1 ? `<div class="qtabs">${qs.map((x, i) => `<button class="${i === U.idx ? 'on' : ''}" data-act="idx" data-i="${i}">문장 ${i + 1}${i ? ' <small>예비</small>' : ''}</button>`).join('')}</div>` : '<div></div>';
+    const stepper = `<ol class="qsteps">${STEPS.map((l, i) => `<li class="${i === U.step ? 'on' : i < U.step ? 'done' : ''}"><button data-act="setStep" data-s="${i}"><b>${i + 1}</b>${l}</button></li>`).join('')}</ol>`;
+    const top = `<div class="qtop">${tabs}${stepper}</div>`;
+    const nav = `<div class="qnav">${U.step > 0 ? `<button class="qprev" data-act="setStep" data-s="${U.step - 1}">← 이전</button>` : '<span></span>'}${U.step < 2 ? `<button class="qnext" data-act="setStep" data-s="${U.step + 1}">다음 · ${STEPS[U.step + 1]} →</button>` : ''}</div>`;
+    const bar = top;
     if (!q || !q.text.trim()) return `${bar}<section class="stage quote"><p class="help"><kbd>O</kbd> 설정에서 문장을 넣으세요.</p></section>`;
     if (U.step === 2) return `${bar}<section class="stage quote" style="max-width:none"><div class="qpair">
         <div><div class="kicker">화면 1 · 이름을 가린 채</div><div class="qtext">${quoteHtml(q.text, false)}</div></div>
         <div><div class="kicker">화면 2 · 원문 그대로</div><div class="qtext">${quoteHtml(q.text, true)}</div></div></div>
-        <div class="qsrc" style="margin-top:14px">${esc(q.label)}</div></section>`;
+        <div class="qsrc" style="margin-top:14px">${esc(q.label)}</div>${nav}</section>`;
     return `${bar}<section class="stage quote"><div class="kicker">${U.step ? '화면 2 · 원문 그대로' : '화면 1 · 이름을 가린 채'}</div>
-      <div class="qtext">${quoteHtml(q.text, U.step === 1)}</div><div class="qsrc">${esc(q.label)}</div></section>`;
+      <div class="qtext">${quoteHtml(q.text, U.step === 1)}</div><div class="qsrc">${esc(q.label)}</div>${nav}</section>`;
   },
   opsTabs: [['cfg', '설정', () => `<div class="box"><h3>문장</h3><div class="fgrid">${fld('mask', '가림 표시')}
     ${S.cfg.quotes.map((q, i) => fld(`quotes.${i}.text`, `문장 ${i + 1}`, { ta: 4, help: '철학자 이름을 {{이름}}처럼 감싸면 화면 1에서 가려집니다' }) + fld(`quotes.${i}.label`, `문장 ${i + 1} 출처 표기`)).join('')}</div></div>${backupBox()}`]]
