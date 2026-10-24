@@ -8,7 +8,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
   --bg:#08121c; --panel:#0f1d2b; --panel2:#132638; --line:#264660; --line2:#2f5677;
@@ -227,15 +226,11 @@ main{padding:0!important}
 .chips i.ch{background:#ff7a1a}
 .chips i.no{background:#bbb}
 
-/* 공유 화면 입장: 상황 + 선택지(왼쪽) + 게임 QR(오른쪽) */
-.lobby .cap.situ{width:580px}
-.choices.lobbych{left:540px;right:auto;top:340px;width:580px;align-items:stretch;gap:12px}
-.choices.lobbych .ch .ct{flex:1}
-.lobbyqr{position:absolute;right:70px;top:120px;width:370px;background:#fff;color:#111;padding:22px;text-align:center;box-shadow:0 0 40px rgba(31,139,255,.35)}
-.lobbyqr .qr{display:flex;justify-content:center}
-.lobbyqr .qr img,.lobbyqr .qr canvas{width:300px!important;height:300px!important}
-.lobbyqr b{display:block;font-size:24px;margin-top:14px}
-.lobbyqr span{display:block;font-size:14px;color:#0a58ca;margin-top:6px;word-break:break-all}
+/* 응답을 아직 불러오지 않았을 때 */
+.rempty{position:absolute;left:400px;top:330px;width:800px;padding:34px 40px;background:rgba(255,255,255,.94);box-shadow:0 8px 40px rgba(0,0,0,.18);text-align:center;z-index:5}
+.rempty b{display:block;font-size:32px;color:#1a2633;font-weight:700}
+.rempty span{display:block;font-size:20px;color:#4a5a6a;margin-top:12px}
+.rempty kbd{font-size:18px;padding:2px 10px;background:#1a2633;color:#fff;border-radius:4px}
 
 </style>
 </head>
@@ -542,7 +537,7 @@ document.addEventListener('keydown', e => {
   else if (k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); PAGE.step(-1); render(); }
 });
 
-/* 4. 선택형 미니게임 — 공유 화면(대장님): 게임 QR → 플로차트 결과. 멤버는 각자 play.html 게임에서 선택(구글폼으로 자동 제출).
+/* 4. 선택형 미니게임 — 공유 화면(대장님): 플로차트 결과만. 멤버는 각자 play.html 게임에서 선택(구글폼으로 자동 제출).
    정보 문장에는 강조를 넣지 않는다(판단 유도 방지). 해석은 넣지 않는다 */
 function parseMini(t) {
   const ni = nickIdx(t.h);
@@ -590,20 +585,6 @@ const FIGURE = `<div class="figure"><svg viewBox="0 0 260 520">
 const BOKEH = [[1150, 240, 60, '#3a8bd6'], [1320, 170, 40, '#5fd0ff'], [1460, 320, 90, '#1f5f9a'], [980, 120, 28, '#ffb35a'], [1260, 400, 34, '#2b7bc4']]
   .map(([x, y, s, c]) => `<div class="bokeh" style="left:${x}px;top:${y}px;width:${s}px;height:${s}px;background:${c}"></div>`).join('');
 
-// 공유 화면 첫 장면: 상황 + 선택지 + 게임 QR. 멤버는 각자 폰에서 play.html 게임으로 선택한다
-const PLAY_URL = /^https?:$/.test(location.protocol) ? new URL('play.html', location.href).href : 'https://okhyun304-dot.github.io/bm1025/play.html';
-function lobby() {
-  const m = S.cfg;
-  return `<div class="scene"><div class="dstage lobby">${BOKEH}<div class="floor"></div><div class="rain"></div><div class="rain r2"></div>
-    ${FIGURE}
-    <div class="marker" style="left:470px;top:250px"></div>
-    ${line(504, 262, 540, 200)}
-    <div class="cap situ"><span class="tag">상황</span>${rich(m.situation)}</div>
-    <div class="choices lobbych">${['A', 'B', 'C'].map(k => `<div class="ch"><span class="ct">${esc(m[k])}</span><span class="ck ${k}">${k}</span></div>`).join('')}</div>
-    <div class="lobbyqr"><div class="qr" data-url="${esc(PLAY_URL)}"></div><b>QR을 찍어 게임을 시작하세요</b><span>${esc(PLAY_URL.replace(/^https?:\/\//, ''))}</span></div>
-  </div></div>`;
-}
-
 function result() {
   const s = stats(), m = S.cfg;
   const X = i => 90 + i * 300, Y = { A: 330, B: 480, C: 630 }, W = 200;
@@ -630,11 +611,12 @@ function result() {
     <rect width="1600" height="150" fill="#e4e4e4" opacity=".8"/><rect width="270" height="150" fill="#f0f0f0"/>
     <line x1="0" y1="150" x2="1600" y2="150" stroke="#b3b3b3" stroke-width="1.5"/>
     ${[[640, 200], [1180, 190], [60, 560], [1530, 560]].map(([x, y]) => `<path class="cross" d="M${x - 11} ${y}h22M${x} ${y - 11}v22"/>`).join('')}</svg>`;
+  const empty = !S.data.mini.length ? `<div class="rempty"><b>아직 응답을 불러오지 않았습니다</b><span><kbd>O</kbd>를 눌러 응답 시트 "설문지 응답 시트3" 탭 내용을 붙여넣으세요</span></div>` : '';
   return `<div class="scene"><div class="dstage flowres">${BG}
     <div class="dhead"><div class="t1">통계</div><div class="t2"><span class="glob">◎</span><div><b>우리 모임 통계</b><span>퍼센트 · 끝까지 응답 ${s.complete}명</span></div></div></div>
     <svg class="lines" viewBox="0 0 1600 900">${lines}</svg>${nodes}
     <div class="rstats"><div class="rstat"><b>${s.kept}</b><span>처음 = 마지막</span></div><div class="rstat"><b>${s.changed}</b><span>처음 ≠ 마지막</span></div><div class="rstat"><b>${s.wavered}</b><span>중간에 한 번 이상 바꿈</span></div></div>
-    ${mat}
+    ${mat}${empty}
     <div class="dfoot"><span data-act="paths" style="cursor:pointer"><b class="key a">경로</b>사람별 경로</span></div>
   </div></div>`;
 }
@@ -667,9 +649,9 @@ setPage({
   fresh: () => ({ raw: { mini: '' }, data: { mini: [] } }),
   ui: { step: 0 },
   parsers: { mini: parseMini },
-  // 화면은 두 장면뿐: 0 = 게임 QR(입장), 1 = 결과. → / ← 로 넘김, 조작줄 없음
-  step(d) { U.step = Math.max(0, Math.min(1, U.step + d)); },
-  view() { return U.step >= 1 ? result() : lobby(); },
+  // 공유 화면 = 결과 통계 한 장면뿐 (조작줄·QR 없음). 응답은 O → 시트3 붙여넣기
+  step() {},
+  view() { return result(); },
   after() {
     const st = $('.dstage'); if (!st) return;
     const k = Math.min(innerWidth / 1600, innerHeight / 900);
