@@ -227,6 +227,16 @@ main{padding:0!important}
 .chips i.ch{background:#ff7a1a}
 .chips i.no{background:#bbb}
 
+/* 공유 화면 입장: 상황 + 선택지(왼쪽) + 게임 QR(오른쪽) */
+.lobby .cap.situ{width:580px}
+.choices.lobbych{left:540px;right:auto;top:340px;width:580px;align-items:stretch;gap:12px}
+.choices.lobbych .ch .ct{flex:1}
+.lobbyqr{position:absolute;right:70px;top:120px;width:370px;background:#fff;color:#111;padding:22px;text-align:center;box-shadow:0 0 40px rgba(31,139,255,.35)}
+.lobbyqr .qr{display:flex;justify-content:center}
+.lobbyqr .qr img,.lobbyqr .qr canvas{width:300px!important;height:300px!important}
+.lobbyqr b{display:block;font-size:24px;margin-top:14px}
+.lobbyqr span{display:block;font-size:14px;color:#0a58ca;margin-top:6px;word-break:break-all}
+
 </style>
 </head>
 <body>
@@ -532,7 +542,7 @@ document.addEventListener('keydown', e => {
   else if (k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); PAGE.step(-1); render(); }
 });
 
-/* 4. 선택형 미니게임 — 디트로이트 인게임 선택 화면처럼. 상황 → 정보 1~4 순차 공개(판단은 구글폼에 단계별 기록) → 플로차트 결과.
+/* 4. 선택형 미니게임 — 공유 화면(대장님): 게임 QR → 플로차트 결과. 멤버는 각자 play.html 게임에서 선택(구글폼으로 자동 제출).
    정보 문장에는 강조를 넣지 않는다(판단 유도 방지). 해석은 넣지 않는다 */
 function parseMini(t) {
   const ni = nickIdx(t.h);
@@ -580,27 +590,18 @@ const FIGURE = `<div class="figure"><svg viewBox="0 0 260 520">
 const BOKEH = [[1150, 240, 60, '#3a8bd6'], [1320, 170, 40, '#5fd0ff'], [1460, 320, 90, '#1f5f9a'], [980, 120, 28, '#ffb35a'], [1260, 400, 34, '#2b7bc4']]
   .map(([x, y, s, c]) => `<div class="bokeh" style="left:${x}px;top:${y}px;width:${s}px;height:${s}px;background:${c}"></div>`).join('');
 
-function scene() {
-  const m = S.cfg, st = U.step;
-  const since = (Date.now() - (U.barStart || 0)) / 1000;
-  const infos = m.infos.slice(0, st);
-  const f = formOf('mini');
-  const qr = f ? `<div class="qrhud"><div class="qr" data-url="${esc(f)}"></div>선택 제출</div>` : '<div class="qrhud empty">폼 링크 미설정 · <kbd>O</kbd> 설정</div>';
-  return `<div class="scene"><div class="dstage">${BOKEH}<div class="floor"></div><div class="rain"></div><div class="rain r2"></div>
+// 공유 화면 첫 장면: 상황 + 선택지 + 게임 QR. 멤버는 각자 폰에서 play.html 게임으로 선택한다
+const PLAY_URL = /^https?:$/.test(location.protocol) ? new URL('play.html', location.href).href : 'https://okhyun304-dot.github.io/bm1025/play.html';
+function lobby() {
+  const m = S.cfg;
+  return `<div class="scene"><div class="dstage lobby">${BOKEH}<div class="floor"></div><div class="rain"></div><div class="rain r2"></div>
     ${FIGURE}
     <div class="marker" style="left:470px;top:250px"></div>
     ${line(504, 262, 540, 200)}
     <div class="cap situ"><span class="tag">상황</span>${rich(m.situation)}</div>
-    ${st > 0 ? `${line(504, 290, 540, 390)}<div class="cap clue" ${since > 1 ? 'style="animation:none"' : ''}><span class="tag">새로운 정보 ${st}/4</span>${rich(infos[st - 1])}</div>` : ''}
-    <div class="log"><div class="hd">정보 <b>${st}/4</b></div>
-      ${infos.slice(0, -1).map((t, i) => `<div class="it">${i + 1}. ${esc(t)}</div>`).join('')}
-      ${[...Array(4 - st)].map(() => '<div class="it dim">[...]</div>').join('')}</div>
-    ${st > 0 && since < 4 ? `<div class="notice" style="animation-delay:-${since}s"><i>▲</i>새로운 정보가 공개되었습니다</div>` : ''}
-    <div class="choices"><div class="pr">${st === 0 ? '첫 판단을 선택하세요' : '판단을 유지할까요, 수정할까요?'}
-        <small>${st === 0 ? '폼에서 A·B·C 중 하나를 고르세요' : '폼에서 [다음]을 누르고 지금의 판단을 고르세요'}</small></div>
-      <div class="tbar"><i style="animation-duration:${m.seconds}s;animation-delay:-${U.barStart ? since : 0}s;${U.barStart ? '' : 'animation-play-state:paused'}"></i></div>
-      ${['A', 'B', 'C'].map(k => `<div class="ch"><span class="ct">${esc(m[k])}</span><span class="ck ${k}">${k}</span></div>`).join('')}</div>
-    ${qr}</div></div>`;
+    <div class="choices lobbych">${['A', 'B', 'C'].map(k => `<div class="ch"><span class="ct">${esc(m[k])}</span><span class="ck ${k}">${k}</span></div>`).join('')}</div>
+    <div class="lobbyqr"><div class="qr" data-url="${esc(PLAY_URL)}"></div><b>QR을 찍어 게임을 시작하세요</b><span>${esc(PLAY_URL.replace(/^https?:\/\//, ''))}</span></div>
+  </div></div>`;
 }
 
 function result() {
@@ -634,7 +635,7 @@ function result() {
     <svg class="lines" viewBox="0 0 1600 900">${lines}</svg>${nodes}
     <div class="rstats"><div class="rstat"><b>${s.kept}</b><span>처음 = 마지막</span></div><div class="rstat"><b>${s.changed}</b><span>처음 ≠ 마지막</span></div><div class="rstat"><b>${s.wavered}</b><span>중간에 한 번 이상 바꿈</span></div></div>
     ${mat}
-    <div class="dfoot"><span><b class="key x">←</b>이전</span><span><b class="key a">경로</b>사람별 경로</span><span><b class="key b">P</b>조작줄 숨김</span></div>
+    <div class="dfoot"><span data-act="paths" style="cursor:pointer"><b class="key a">경로</b>사람별 경로</span></div>
   </div></div>`;
 }
 function pathsModal() {
@@ -642,9 +643,6 @@ function pathsModal() {
     <div class="modal-btns"><button class="b" data-act="anonPaths">${U.anon ? '이름 표시' : '이름 숨김'}</button><button class="b pri" data-act="closeModal">닫기 (Esc)</button></div>`);
 }
 Object.assign(ACT, {
-  next: () => { PAGE.step(1); render(); }, prev: () => { PAGE.step(-1); render(); },
-  reset: () => { U.step = 0; U.barStart = 0; render(); },
-  bar: () => { U.barStart = Date.now(); render(); },
   paths: pathsModal,
   anonPaths: () => { U.anon = !U.anon; saveU(); pathsModal(); }
 });
@@ -667,25 +665,23 @@ setPage({
     seconds: 40
   },
   fresh: () => ({ raw: { mini: '' }, data: { mini: [] } }),
-  ui: { step: 0, barStart: 0 },
+  ui: { step: 0 },
   parsers: { mini: parseMini },
-  step(d) { const n = Math.max(0, Math.min(5, U.step + d)); if (n !== U.step) { U.step = n; U.barStart = n < 5 ? Date.now() : 0; } },
-  view() {
-    const st = U.step;
-    const dots = [0, 1, 2, 3, 4, 5].map(i => `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${i <= st ? 'var(--cyan)' : 'var(--line2)'}"></span>`).join('');
-    const bar = `<button class="b" data-act="prev">← 이전</button><button class="b pri" data-act="next">${st < 4 ? `정보 ${st + 1} 공개 →` : st === 4 ? '결과 보기 →' : '결과'}</button>
-      <span style="display:flex;gap:6px">${dots}</span>${st < 5 ? '<button class="b" data-act="bar">시간 막대 다시</button>' : '<button class="b" data-act="paths">사람별 경로</button>'}
-      <button class="b" data-act="reset">처음으로</button>`;
-    return (st >= 5 ? result() : scene()) + ctrl(bar);
+  // 화면은 두 장면뿐: 0 = 게임 QR(입장), 1 = 결과. → / ← 로 넘김, 조작줄 없음
+  step(d) { U.step = Math.max(0, Math.min(1, U.step + d)); },
+  view() { return U.step >= 1 ? result() : lobby(); },
+  after() {
+    const st = $('.dstage'); if (!st) return;
+    const k = Math.min(innerWidth / 1600, innerHeight / 900);
+    st.style.transform = `translate(${(innerWidth - 1600 * k) / 2}px,${Math.max(0, (innerHeight - 900 * k) / 2)}px) scale(${k})`;
   },
-  after: fitStage,
   opsTabs: [
     ['data', '응답 불러오기', () => dataBox('mini', '선택 게임 응답')],
     ['cfg', '설정', () => `<div class="box"><h3>폼 링크 · 문구</h3><div class="fgrid">
       ${fld('form', '구글폼 응답 링크', { help: '구글폼_만들기.gs 실행 로그의 [5 선택 게임] 응답 링크' })}
       ${fld('situation', '상황', { ta: 2, help: '**글자**로 감싸면 굵게 표시됩니다' })}${fld('A', 'A')}${fld('B', 'B')}${fld('C', 'C')}
       ${fld('short.A', '결과 화면 A 이름')}${fld('short.B', '결과 화면 B 이름')}${fld('short.C', '결과 화면 C 이름')}
-      ${[0, 1, 2, 3].map(i => fld(`infos.${i}`, `정보 ${i + 1}`)).join('')}${fld('seconds', '시간 막대(초)', { help: '표시용. 제출을 막지는 않습니다' })}</div></div>${backupBox()}`]
+      ${[0, 1, 2, 3].map(i => fld(`infos.${i}`, `정보 ${i + 1}`)).join('')}</div></div>${backupBox()}`]
   ]
 });
 

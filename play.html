@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>선택 게임</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<!-- 4. 선택형 미니게임 — 멤버가 직접 하는 게임 화면.
+     닉네임 → 상황 → A/B/C 선택 → 정보 1~4가 하나씩 공개될 때마다 다시 선택 → 끝나면 선택 게임 구글폼으로 자동 제출.
+     (응답 시트·결과 화면은 choice.html 그대로 사용). 정보 문장에는 강조를 넣지 않고, 해석도 넣지 않는다. -->
+<style>
+:root{--bg:#04070a;--ink:#f2f4f6;--dim:#9fb3c6;--blue:#1f8bff;--cyan:#58a8ff;--gold:#f5b335;--A:#8fd14f;--B:#ff5a3c;--C:#4aa8ff}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',sans-serif;-webkit-text-size-adjust:100%}
+body{background:radial-gradient(ellipse at 30% 40%,#2a3846 0%,#121b24 45%,#05080c 100%) fixed,var(--bg);overflow-x:hidden}
+.rain{position:fixed;inset:-200px;pointer-events:none;z-index:0;background-image:repeating-linear-gradient(100deg,rgba(255,255,255,.05) 0 1px,transparent 1px 13px);background-size:220px 220px;animation:rain .45s linear infinite}
+@keyframes rain{to{background-position:-40px 220px}}
+.figure{position:fixed;left:50%;bottom:-40px;width:230px;height:460px;margin-left:-115px;opacity:.28;z-index:0;pointer-events:none}
+.figure svg{width:100%;height:100%;overflow:visible}
+.figure .ol{fill:rgba(245,179,53,.05);stroke:var(--gold);stroke-width:3;filter:drop-shadow(0 0 6px rgba(245,179,53,.7))}
+.figure .scan{position:absolute;left:-20px;right:-20px;height:2px;background:rgba(245,179,53,.8);box-shadow:0 0 12px var(--gold);animation:scan 3.2s ease-in-out infinite}
+@keyframes scan{0%,100%{top:2%}50%{top:96%}}
+#app{position:relative;z-index:1;max-width:680px;margin:0 auto;padding:22px 16px 40px;min-height:100vh;display:flex;flex-direction:column}
+
+.top{display:flex;align-items:center;justify-content:space-between;font-size:13px;letter-spacing:.18em;color:var(--dim);margin-bottom:16px}
+.top b{color:#fff;letter-spacing:0;font-size:18px}
+.dots{display:flex;gap:6px}.dots i{width:9px;height:9px;border-radius:50%;background:#2d3b48}.dots i.on{background:var(--cyan)}
+
+.cap{background:rgba(8,11,14,.82);padding:18px 20px;font-size:21px;font-weight:300;line-height:1.55;margin-bottom:12px}
+.cap .tag{display:block;font-size:12px;letter-spacing:.2em;color:var(--cyan);font-weight:700;margin-bottom:6px}
+.cap.clue{border-left:3px solid var(--blue);animation:clue .6s ease-out}
+@keyframes clue{from{opacity:0;transform:translateX(24px)}}
+.log{margin:-2px 0 12px}
+.log .it{font-size:15px;color:#cfd9e2;padding:5px 0 5px 12px;border-left:3px solid #2f5677;line-height:1.5;margin-top:4px}
+.notice{display:inline-flex;align-items:center;gap:10px;background:rgba(8,11,14,.82);padding:8px 14px;font-size:14px;margin-bottom:12px;animation:note 3.5s ease-out forwards}
+.notice i{font-style:normal;color:var(--blue)}
+@keyframes note{0%{opacity:0;transform:translateY(-8px)}12%,80%{opacity:1;transform:none}100%{opacity:.0}}
+
+.pr{font-size:18px;color:#fff;margin:10px 0 4px;text-shadow:0 2px 8px #000}
+.pr small{display:block;font-size:13px;color:var(--dim);margin-top:2px}
+.choices{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.chb{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:rgba(8,11,14,.82);border:1px solid #23313e;color:#fff;padding:14px 14px;font:inherit;font-size:18px;line-height:1.4;cursor:pointer;transition:transform .08s,border-color .15s,background .15s;-webkit-tap-highlight-color:transparent}
+.chb:hover{border-color:#3f6a8f;background:rgba(20,30,40,.9)}
+.chb:active{transform:scale(.985)}
+.chb .k{flex:0 0 40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;background:rgba(255,255,255,.06)}
+.chb .t{flex:1}
+.chb .prev{font-size:11px;letter-spacing:.12em;color:var(--dim);border:1px solid #3b4a58;padding:2px 6px;white-space:nowrap}
+.chb.A .k{color:var(--A)}.chb.B .k{color:var(--B)}.chb.C .k{color:var(--C)}
+.chb.picked{border-color:#fff;background:rgba(40,60,80,.9)}
+
+.reason{margin-top:12px;background:rgba(8,11,14,.88);padding:14px;border:1px solid #2f5677;animation:clue .3s ease-out}
+.reason label{display:block;font-size:14px;color:var(--dim);margin-bottom:8px}
+input[type=text]{width:100%;font:inherit;font-size:18px;padding:12px 14px;background:#0b1117;color:#fff;border:1px solid #3f6a8f;outline:none;border-radius:0}
+input[type=text]:focus{border-color:var(--cyan)}
+.btn{display:block;width:100%;margin-top:12px;padding:15px;font:inherit;font-size:18px;font-weight:700;letter-spacing:.06em;color:#04121f;background:var(--cyan);border:0;cursor:pointer}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.ghost{background:transparent;color:var(--cyan);border:1px solid #2f5677;font-weight:500}
+
+.intro h1{font-size:34px;font-weight:300;letter-spacing:.08em;margin:30px 0 6px}
+.intro .ln{height:1px;background:linear-gradient(90deg,var(--dim),transparent);margin:16px 0 22px}
+.intro p{color:var(--dim);font-size:15px;line-height:1.7;margin:0 0 22px}
+.end{text-align:center;margin-top:40px}
+.end h2{font-size:28px;font-weight:300;letter-spacing:.06em;margin:0 0 10px}
+.end p{color:var(--dim);font-size:15px;line-height:1.7}
+.path{display:flex;justify-content:center;align-items:center;gap:6px;margin:24px 0 8px;flex-wrap:wrap}
+.path i{font-style:normal;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;background:rgba(8,11,14,.82);border:1px solid #2f5677}
+.path i.A{color:var(--A)}.path i.B{color:var(--B)}.path i.C{color:var(--C)}
+.path span{color:#3f6a8f}
+.path-l{display:flex;justify-content:center;gap:6px;font-size:11px;color:var(--dim)}
+.path-l span{width:44px;text-align:center}
+.err{color:#ff8a8a;font-size:14px;margin-top:10px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="rain"></div>
+<div class="figure"><svg viewBox="0 0 260 520"><circle class="ol" cx="130" cy="45" r="38"/><path class="ol" d="M92 92 Q70 100 62 140 L40 300 Q36 320 52 322 L70 250 L74 330 L80 515 L115 515 L125 340 L135 340 L145 515 L180 515 L186 330 L190 250 L208 322 Q224 320 220 300 L198 140 Q190 100 168 92 Z"/></svg><div class="scan"></div></div>
+<main id="app"></main>
+<script>
+// 선택 게임 구글폼 (자동 제출 대상). 항목 번호는 폼 화면에서 읽은 값 — 폼을 다시 만들면 바꿔야 함
+var FORM = 'https://docs.google.com/forms/d/e/1FAIpQLScNvmurGQThU6hDN2_MPQ6BLnuUj7LNCzdZ9aIJ1-79rXpSyA/formResponse';
+var E_NICK = 'entry.1968630404';
+var E_JUDGE = ['entry.1610785426', 'entry.804325178', 'entry.208860470', 'entry.1256959034', 'entry.1213242179'];
+var E_REASON = ['entry.51330027', 'entry.1296984050', 'entry.469377963', 'entry.1000391279', 'entry.1253759273'];
+var FORM_OPT = {
+  A: 'A. 자신의 적성과 가치를 발견한 진정한 선택이다',
+  B: 'B. 학업 실패를 피하기 위한 방어적 선택이다',
+  C: 'C. 다른 설명이 가능하다 (한 줄 이유에 적어주세요)'
+};
+var G = {
+  situation: '한 학생이 대학 입시를 포기하고 게임 개발자가 되겠다고 선언했습니다.',
+  A: '자신의 적성과 가치를 발견한 진정한 선택이다',
+  B: '학업 실패를 피하기 위한 방어적 선택이다',
+  C: '다른 설명이 가능하다',
+  infos: [
+    '학생은 과거 입시에 여러 번 실패했습니다.',
+    '게임 개발을 1년 이상 꾸준히 해왔습니다.',
+    '실제 게임을 출시했고 이용자들의 혹평도 견뎠습니다.',
+    '그런데 학업 실패에 대한 불안은 여전히 가지고 있습니다.'
+  ]
+};
+
+var KEY = 'bm1025_play';
+var S = load();
+function load() {
+  try { var s = JSON.parse(localStorage.getItem(KEY)); if (s && s.v === 1) return s; } catch (e) {}
+  return { v: 1, nick: '', step: -1, picks: [], reasons: [], pending: null, sent: false };
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+var app = document.getElementById('app');
+
+function dots() {
+  var h = '';
+  for (var i = 0; i < 5; i++) h += '<i class="' + (i <= S.step ? 'on' : '') + '"></i>';
+  return '<div class="dots">' + h + '</div>';
+}
+
+function render() {
+  if (S.sent || S.step >= 5) return renderEnd();
+  if (S.step < 0) return renderIntro();
+  var st = S.step;
+  var h = '<div class="top"><span>정보 <b>' + st + '/4</b></span>' + dots() + '</div>';
+  h += '<div class="cap"><span class="tag">상황</span>' + esc(G.situation) + '</div>';
+  if (st > 0) {
+    if (st > 1) {
+      h += '<div class="log">';
+      for (var i = 0; i < st - 1; i++) h += '<div class="it">' + (i + 1) + '. ' + esc(G.infos[i]) + '</div>';
+      h += '</div>';
+    }
+    h += '<div class="notice"><i>▲</i>새로운 정보가 공개되었습니다</div>';
+    h += '<div class="cap clue"><span class="tag">새로운 정보 ' + st + '/4</span>' + esc(G.infos[st - 1]) + '</div>';
+  }
+  h += '<div class="pr">' + (st === 0 ? '이 선택은 무엇일까요?' : '판단을 유지할까요, 수정할까요?') +
+    '<small>' + (st === 0 ? '하나를 눌러 고르세요' : '그대로라면 같은 것을 누르면 됩니다') + '</small></div>';
+  h += '<div class="choices">';
+  ['A', 'B', 'C'].forEach(function (k) {
+    var prev = st > 0 && S.picks[st - 1] === k;
+    h += '<button class="chb ' + k + (S.pending === k ? ' picked' : '') + '" data-k="' + k + '"><span class="k">' + k + '</span><span class="t">' + esc(G[k]) + '</span>' + (prev ? '<span class="prev">직전 선택</span>' : '') + '</button>';
+  });
+  h += '</div>';
+  if (S.pending === 'C') {
+    h += '<div class="reason"><label>어떤 설명이 가능할까요? 한 줄로 적어주세요 (안 적어도 됩니다)</label>' +
+      '<input type="text" id="why" maxlength="200" autocomplete="off" value="' + esc(S.reasons[st] || '') + '">' +
+      '<button class="btn" id="okC">이걸로 선택</button></div>';
+  }
+  app.innerHTML = h;
+  window.scrollTo(0, 0);
+  if (S.pending === 'C') { var w = document.getElementById('why'); w.focus(); }
+}
+
+function renderIntro() {
+  app.innerHTML = '<div class="intro"><h1>선택 게임</h1><div class="ln"></div>' +
+    '<p>한 학생의 선택에 대한 짧은 게임입니다.<br>처음에 하나를 고르고, 정보가 하나씩 공개될 때마다 판단을 다시 고릅니다.<br>앞으로 돌아갈 수는 없습니다.</p>' +
+    '<label class="pr" for="nick">닉네임<small>텔레그램 닉네임 그대로 적어주세요</small></label>' +
+    '<input type="text" id="nick" maxlength="40" autocomplete="off" value="' + esc(S.nick) + '">' +
+    '<button class="btn" id="start" ' + (S.nick.trim() ? '' : 'disabled') + '>시작</button></div>';
+  var n = document.getElementById('nick'), b = document.getElementById('start');
+  n.addEventListener('input', function () { b.disabled = !n.value.trim(); });
+  n.addEventListener('keydown', function (e) { if (e.key === 'Enter' && n.value.trim()) start(); });
+  b.addEventListener('click', start);
+  function start() { S.nick = n.value.trim(); S.step = 0; save(); render(); }
+}
+
+function renderEnd() {
+  var h = '<div class="end"><h2>' + (S.sent ? '제출되었습니다' : '제출 중…') + '</h2>';
+  h += '<div class="path">' + S.picks.map(function (k, i) { return (i ? '<span>›</span>' : '') + '<i class="' + k + '">' + k + '</i>'; }).join('') + '</div>';
+  h += '<div class="path-l"><span>처음</span><span>1</span><span>2</span><span>3</span><span>4</span></div>';
+  h += '<p>' + esc(S.nick) + '님의 선택이 기록되었습니다.<br>진행자의 안내를 기다려 주세요.</p>';
+  if (!S.sent) h += '<div class="err" id="err" hidden>제출하지 못했습니다. 인터넷 연결을 확인하고 다시 눌러주세요.</div><button class="btn ghost" id="retry" hidden>다시 보내기</button>';
+  app.innerHTML = h + '</div>';
+  if (!S.sent) { var r = document.getElementById('retry'); if (r) r.addEventListener('click', submit); }
+}
+
+// A·B는 누르면 바로 확정. C는 한 줄 이유 칸을 연 뒤 [이걸로 선택](또는 C 다시 누르기)으로 확정
+function pick(k) {
+  var st = S.step;
+  if (k === 'C' && S.pending !== 'C') { S.pending = 'C'; save(); render(); return; }
+  if (k === 'C') { var w = document.getElementById('why'); S.reasons[st] = w ? w.value.trim() : ''; }
+  else S.reasons[st] = '';
+  S.picks[st] = k; S.pending = null; S.step = st + 1; save();
+  if (S.step >= 5) { render(); submit(); } else render();
+}
+
+function submit() {
+  var p = new URLSearchParams();
+  p.append(E_NICK, S.nick);
+  for (var i = 0; i < 5; i++) {
+    p.append(E_JUDGE[i], FORM_OPT[S.picks[i]]);
+    if (S.reasons[i]) p.append(E_REASON[i], S.reasons[i]);
+  }
+  p.append('pageHistory', '0,1,2,3,4');
+  var err = document.getElementById('err'), retry = document.getElementById('retry');
+  if (err) err.hidden = true; if (retry) retry.hidden = true;
+  fetch(FORM, { method: 'POST', mode: 'no-cors', body: p }).then(function () {
+    S.sent = true; save(); render();
+  }).catch(function () {
+    var e2 = document.getElementById('err'), r2 = document.getElementById('retry');
+    if (e2) e2.hidden = false; if (r2) r2.hidden = false;
+  });
+}
+
+app.addEventListener('click', function (e) {
+  var b = e.target.closest('.chb');
+  if (b) { pick(b.getAttribute('data-k')); return; }
+  if (e.target.id === 'okC') pick('C');
+});
+app.addEventListener('keydown', function (e) {
+  if (e.target.id === 'why' && e.key === 'Enter') { e.preventDefault(); pick('C'); }
+});
+render();
+</script>
+</body>
+</html>
