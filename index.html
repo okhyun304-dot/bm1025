@@ -225,7 +225,7 @@ body.present .wrap{padding-bottom:40px}
 /* 공통: 상태 저장, 타이머, QR, 응답 붙여넣기, 운영 화면, 키보드. 각 페이지는 맨 끝에서 setPage({...})로 자기 화면을 등록한다. */
 
 // 구글폼 응답 링크 (_src/설정.json → build.py가 넣음). 설정창(O)에서 바꾸면 그 브라우저에서는 그 값이 우선
-const FORMS = {"q1": "https://forms.gle/V6y4CHsSqmuoboKV9", "ban": "https://forms.gle/HnCNosyLGXsz9WrN8", "mini": "https://forms.gle/CnLskyPxAmTcj5rPA", "post": "https://forms.gle/dbt5EXQKCXaER1bK6", "miniCsv": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFh8CcA1-NiCFMa0bucG_YDS9Q3YUF02ObIAYb1aUpkML7YdJsueJZCKSLToDKDLuNwEfDY3YJF-v0/pub?gid=864911829&single=true&output=csv"};
+const FORMS = {"q1": "https://forms.gle/V6y4CHsSqmuoboKV9", "ban": "https://forms.gle/HnCNosyLGXsz9WrN8", "mini": "https://forms.gle/CnLskyPxAmTcj5rPA", "post": "https://forms.gle/dbt5EXQKCXaER1bK6", "miniCsv": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFh8CcA1-NiCFMa0bucG_YDS9Q3YUF02ObIAYb1aUpkML7YdJsueJZCKSLToDKDLuNwEfDY3YJF-v0/pub?gid=864911829&single=true&output=csv", "banCsv": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFh8CcA1-NiCFMa0bucG_YDS9Q3YUF02ObIAYb1aUpkML7YdJsueJZCKSLToDKDLuNwEfDY3YJF-v0/pub?gid=2130030714&single=true&output=csv"};
 function formOf(key) { return (S && S.cfg && S.cfg.form) || FORMS[key] || ''; }
 
 /* ---------- utils ---------- */
