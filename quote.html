@@ -269,7 +269,7 @@ function renderQR() {
 }
 function ctrl(inner) {
   const keys = [['←', '→', '이전 · 다음'], ['T', '타이머'], ['F', '전체화면'], ['P', '이 줄 숨기기']]
-    .filter(k => k[0] !== 'T' || PAGE.timer)
+    .filter(k => k[0] !== 'T' || PAGE.timer).filter(k => k[0] !== '←' || !PAGE.noNav)
     .map(k => `<span class="key">${k.slice(0, -1).map(x => `<kbd>${x}</kbd>`).join('')}<em>${k[k.length - 1]}</em></span>`).join('');
   return `<div class="ctrl"><div class="acts">${inner}</div><div class="hint">${keys}</div></div>`;
 }
