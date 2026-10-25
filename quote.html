@@ -328,6 +328,14 @@ function table(text) {
 }
 const isTs = h => /타임스탬프|timestamp/i.test(h);
 function nickIdx(h) { return h.findIndex(x => /닉네임|이름/.test(x)); }
+// [↺ 리셋] = 같은 구글폼에 '리셋 표시' 한 줄을 제출 → 대장님·오키·멤버 모든 화면이 마지막 리셋 줄 이후만 센다 (시트는 그대로)
+const RESET_NICK = '↺ 리셋';
+let RESET_AT = '';  // 마지막 리셋 줄의 시각 (표시용)
+function afterReset(t, ni, ti) {
+  let k = -1; t.rows.forEach((r, i) => { if (ni >= 0 && (r[ni] || '').trim() === RESET_NICK) k = i; });
+  RESET_AT = k >= 0 && ti >= 0 ? ((String(t.rows[k][ti]).match(/(오전|오후)?\s*\d{1,2}:\d{2}/) || [''])[0]) : (k >= 0 ? '리셋' : '');
+  return (typeof U !== 'undefined' && U && U.all) ? t.rows.filter(r => (r[ni] || '').trim() !== RESET_NICK) : t.rows.slice(k + 1);
+}
 function dedupe(list) { const m = new Map(); list.forEach((r, i) => m.set(r.nick ? norm(r.nick) : '#' + i, r)); return [...m.values()]; }
 // 1번 질문 응답 표 → [{id, nick, text}]
 function parseQ1(t) {
