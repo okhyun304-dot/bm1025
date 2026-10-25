@@ -421,6 +421,14 @@ function table(text) {
 }
 const isTs = h => /타임스탬프|timestamp/i.test(h);
 function nickIdx(h) { return h.findIndex(x => /닉네임|이름/.test(x)); }
+// [↺ 리셋] = 같은 구글폼에 '리셋 표시' 한 줄을 제출 → 대장님·오키·멤버 모든 화면이 마지막 리셋 줄 이후만 센다 (시트는 그대로)
+const RESET_NICK = '↺ 리셋';
+let RESET_AT = '';  // 마지막 리셋 줄의 시각 (표시용)
+function afterReset(t, ni, ti) {
+  let k = -1; t.rows.forEach((r, i) => { if (ni >= 0 && (r[ni] || '').trim() === RESET_NICK) k = i; });
+  RESET_AT = k >= 0 && ti >= 0 ? ((String(t.rows[k][ti]).match(/(오전|오후)?\s*\d{1,2}:\d{2}/) || [''])[0]) : (k >= 0 ? '리셋' : '');
+  return (typeof U !== 'undefined' && U && U.all) ? t.rows.filter(r => (r[ni] || '').trim() !== RESET_NICK) : t.rows.slice(k + 1);
+}
 function dedupe(list) { const m = new Map(); list.forEach((r, i) => m.set(r.nick ? norm(r.nick) : '#' + i, r)); return [...m.values()]; }
 // 1번 질문 응답 표 → [{id, nick, text}]
 function parseQ1(t) {
@@ -552,6 +560,9 @@ document.addEventListener('keydown', e => {
 /* 4. 선택형 미니게임 — 공유 화면(대장님): 플로차트 결과만. 멤버는 각자 play.html 게임에서 선택(구글폼으로 자동 제출).
    정보 문장에는 강조를 넣지 않는다(판단 유도 방지). 해석은 넣지 않는다 */
 // 구글 시트 타임스탬프 "2026. 10. 25 오전 2:38:43" → ms (못 읽으면 0)
+// 리셋 표시 줄을 넣을 선택 게임 폼 (play.html 과 같은 폼·항목)
+const MINI_FORM = 'https://docs.google.com/forms/d/e/1FAIpQLScNvmurGQThU6hDN2_MPQ6BLnuUj7LNCzdZ9aIJ1-79rXpSyA/formResponse';
+const MINI_NICK = 'entry.1968630404', MINI_JUDGE = ['entry.1610785426', 'entry.804325178', 'entry.208860470', 'entry.1256959034', 'entry.1213242179'];
 function tsMs(v) {
   const m = String(v || '').match(/(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\s*(오전|오후)?\s*(\d{1,2}):(\d{2}):(\d{2})/);
   if (!m) return 0;
@@ -566,7 +577,7 @@ function parseMini(t) {
     if (/판단/.test(x) && !/이유/.test(x)) { const m = x.match(/정보\s*(\d)/); cur = m ? +m[1] : 0; map.push({ i, step: cur, kind: 'c' }); }
     else if (/이유/.test(x) && cur >= 0) map.push({ i, step: cur, kind: 'r' });
   });
-  const out = dedupe(t.rows.filter(r => !cut || ti < 0 || tsMs(r[ti]) >= cut).map(r => {
+  const out = dedupe(afterReset(t, ni, ti).filter(r => !cut || ti < 0 || tsMs(r[ti]) >= cut).map(r => {
     const steps = [0, 1, 2, 3, 4].map(() => ({ c: '', r: '' }));
     map.forEach(m => { const v = (r[m.i] || '').trim(); if (m.step > 4) return;
       if (m.kind === 'c') steps[m.step].c = (v.match(/^[ABC]/) || [''])[0]; else steps[m.step].r = v; });
@@ -662,7 +673,7 @@ function result() {
     <svg class="lines" viewBox="0 0 1600 900">${lines}</svg>${nodes}
     <div class="rstats"><div class="rstat"><b>${s.kept}</b><span>처음 = 마지막</span></div><div class="rstat"><b>${s.changed}</b><span>처음 ≠ 마지막</span></div><div class="rstat"><b>${s.wavered}</b><span>중간에 한 번 이상 바꿈</span></div></div>
     ${mat}${empty}
-    <div class="topbtns">${U.cut ? `<span class="cutnote">${new Date(U.cut).toTimeString().slice(0, 5)} 이후 제출만 집계 · <b class="lnk" data-act="showAll">전체 보기</b></span>` : ''}
+    <div class="topbtns">${(RESET_AT || U.cut) && !U.all ? `<span class="cutnote">${RESET_AT || new Date(U.cut).toTimeString().slice(0, 5)} 리셋 이후만 집계 · <b class="lnk" data-act="showAll">전체 보기</b></span>` : ''}
       <button class="tbtn reload" data-act="reload" title="키보드 A도 같음">⟳ 최신화 <kbd>A</kbd></button><button class="tbtn reset" data-act="resetCount">↺ 리셋</button><button class="tbtn main" data-act="paths">멤버별 경로 보기</button></div>
   </div></div>`;
 }
@@ -675,8 +686,15 @@ Object.assign(ACT, {
   paths: pathsModal,
   reload: () => autoLoad(true),
   // 새로 세기: 지금 이후에 제출된 것만 센다 (시트 자체는 그대로 — 테스트 응답 정리는 나중에 한 번에)
-  resetCount: () => { if (!confirm('리셋할까요? 지금부터 새로 셉니다. 지금까지의 응답(테스트 등)은 화면에서 빠집니다. 시트에는 그대로 남습니다.')) return; U.cut = Date.now(); saveU(); reparse(); },
-  showAll: () => { U.cut = 0; saveU(); reparse(); },
+  // 리셋 = 폼에 리셋 표시 한 줄 제출 → 모든 화면(대장님·오키)이 함께 0부터. 내 화면은 바로, 다른 화면은 다음 최신화 때
+  resetCount: () => {
+    if (!confirm('리셋할까요?\n대장님·오키 모든 화면에서 지금까지의 응답(테스트 등)이 빠지고 0부터 셉니다.\n시트에는 그대로 남습니다.')) return;
+    const p = new URLSearchParams(); p.append(MINI_NICK, RESET_NICK);
+    MINI_JUDGE.forEach(e => p.append(e, 'A. 자신의 적성과 가치를 발견한 진정한 선택이다'));  // 폼 필수 항목 채움용 (리셋 줄은 집계에서 빠짐)
+    fetch(MINI_FORM, { method: 'POST', mode: 'no-cors', body: p }).catch(() => {});
+    U.cut = Date.now(); U.all = false; saveU(); reparse(); toast('리셋 — 다른 화면도 잠시 뒤(최신화 때) 함께 0부터');
+  },
+  showAll: () => { U.cut = 0; U.all = true; saveU(); reparse(); },
   anonPaths: () => { U.anon = !U.anon; saveU(); pathsModal(); }
 });
 

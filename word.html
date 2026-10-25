@@ -202,6 +202,9 @@ mark.ban{background:rgba(255,93,108,.25);color:#ffb3ba;border-bottom:2px solid v
   .mybox{padding:16px}
 }
 
+/* 리셋은 모든 화면에 적용되므로 폰(멤버)에서는 숨김 */
+@media (max-width:760px){.tbtn.reset{display:none}}
+
 </style>
 </head>
 <body>
@@ -379,6 +382,14 @@ function table(text) {
 }
 const isTs = h => /타임스탬프|timestamp/i.test(h);
 function nickIdx(h) { return h.findIndex(x => /닉네임|이름/.test(x)); }
+// [↺ 리셋] = 같은 구글폼에 '리셋 표시' 한 줄을 제출 → 대장님·오키·멤버 모든 화면이 마지막 리셋 줄 이후만 센다 (시트는 그대로)
+const RESET_NICK = '↺ 리셋';
+let RESET_AT = '';  // 마지막 리셋 줄의 시각 (표시용)
+function afterReset(t, ni, ti) {
+  let k = -1; t.rows.forEach((r, i) => { if (ni >= 0 && (r[ni] || '').trim() === RESET_NICK) k = i; });
+  RESET_AT = k >= 0 && ti >= 0 ? ((String(t.rows[k][ti]).match(/(오전|오후)?\s*\d{1,2}:\d{2}/) || [''])[0]) : (k >= 0 ? '리셋' : '');
+  return (typeof U !== 'undefined' && U && U.all) ? t.rows.filter(r => (r[ni] || '').trim() !== RESET_NICK) : t.rows.slice(k + 1);
+}
 function dedupe(list) { const m = new Map(); list.forEach((r, i) => m.set(r.nick ? norm(r.nick) : '#' + i, r)); return [...m.values()]; }
 // 1번 질문 응답 표 → [{id, nick, text}]
 function parseQ1(t) {
@@ -532,7 +543,7 @@ function parseBan(t) {
   const ai = t.h.findIndex(x => /^\s*A의|\bA\b/.test(x) && !isTs(x));
   const bi = t.h.findIndex(x => /^\s*B의|\bB\b/.test(x) && !isTs(x));
   const cut = (U && U.cut) || 0;  // [리셋]을 누른 시각 — 그 전에 낸 응답(테스트 등)은 세지 않는다
-  const out = dedupe(t.rows.filter(r => !cut || ti < 0 || tsMs(r[ti]) >= cut)
+  const out = dedupe(afterReset(t, ni, ti).filter(r => !cut || ti < 0 || tsMs(r[ti]) >= cut)
     .map(r => ({ nick: ni >= 0 ? (r[ni] || '').trim() : '', a: ai >= 0 ? (r[ai] || '').trim() : '', b: bi >= 0 ? (r[bi] || '').trim() : '' }))
     .filter(r => r.a || r.b));
   out.forEach(r => r.id = hash(norm(r.nick) + '|' + r.a.slice(0, 20) + r.b.slice(0, 20)));
@@ -600,8 +611,14 @@ Object.assign(ACT, {
   reload: () => autoLoad(true),
   // 게시 주소가 없을 때: 붙여넣기 칸 열기 (붙여넣으면 저절로 닫히고 카드가 바로 나온다)
   pasteOpen: () => { U.ops = true; U.opsTab = 'data'; render(); setTimeout(() => { const t = $('textarea[data-raw="ban"]'); if (t) { t.value = ''; t.focus(); } }, 50); },
-  resetCount: () => { if (!confirm('리셋할까요? 지금부터 새로 셉니다. 지금까지의 문장(테스트 등)은 화면에서 빠집니다. 시트에는 그대로 남습니다.')) return; U.cut = Date.now(); U.sel = []; saveU(); reparse(); },
-  showAll: () => { U.cut = 0; saveU(); reparse(); },
+  // 리셋 = 폼에 리셋 표시 한 줄 제출 → 모든 화면(대장님·오키·멤버)이 함께 0부터. 내 화면은 바로, 다른 화면은 다음 최신화 때
+  resetCount: () => {
+    if (!confirm('리셋할까요?\n대장님·오키·멤버 모든 화면에서 지금까지의 문장(테스트 등)이 빠지고 0부터 셉니다.\n시트에는 그대로 남습니다.')) return;
+    const p = new URLSearchParams(); p.append(BAN_NICK, RESET_NICK); p.append(BAN_A, '-'); p.append(BAN_B, '-');
+    fetch(BAN_FORM, { method: 'POST', mode: 'no-cors', body: p }).catch(() => {});
+    U.cut = Date.now(); U.all = false; U.sel = []; saveU(); reparse(); toast('리셋 — 다른 화면도 잠시 뒤(최신화 때) 함께 0부터');
+  },
+  showAll: () => { U.cut = 0; U.all = true; saveU(); reparse(); },
   wSend: b => {
     if (!wReady() || !confirm('제출할까요? 제출한 뒤에는 고칠 수 없습니다.')) return;
     b.disabled = true; b.textContent = '제출 중…';
@@ -638,7 +655,7 @@ setPage({
         <div class="who"><span>${esc(r.nick || '(닉네임 없음)')}</span>${!big && U.sel.includes(r.id) ? '<span class="picked">선택됨</span>' : ''}</div>
         <div class="ln"><b class="kA">A</b><span>${markBan(r.a)}</span></div>
         <div class="ln"><b class="kB">B</b><span>${markBan(r.b)}</span></div></div>`;
-    const info = `${all.length}명${BAN_CSV && loadedAt ? ` · 자동 갱신 ${loadedAt} (15초마다, A 또는 [최신화] = 지금 바로)` : ''}${U.cut ? ` · <b class="cutnote">${new Date(U.cut).toTimeString().slice(0, 5)} 이후만 집계</b> <b class="lnk" data-act="showAll">전체 보기</b>` : ''}`;
+    const info = `${all.length}명${BAN_CSV && loadedAt ? ` · 자동 갱신 ${loadedAt} (15초마다, A 또는 [최신화] = 지금 바로)` : ''}${(RESET_AT || U.cut) && !U.all ? ` · <b class="cutnote">${RESET_AT || new Date(U.cut).toTimeString().slice(0, 5)} 리셋 이후만</b> <b class="lnk" data-act="showAll">전체 보기</b>` : ''}`;
     const top = `<div class="wtop"><div class="wtitle">${U.mode === 'compare' ? '<button class="back" data-act="mode" data-m="wall">←</button>' : ''}<div><h2>${U.mode === 'compare' ? '골라 본 문장' : "'안다' 없이 다시 쓴 문장"}</h2><span class="winfo">${info}</span></div></div>
       <div class="wbtns">${BAN_CSV ? '<button class="tbtn reload" data-act="reload">⟳ 최신화 <kbd>A</kbd></button>' : '<button class="tbtn reload" data-act="pasteOpen">📋 응답 붙여넣기</button>'}<button class="tbtn reset" data-act="resetCount">↺ 리셋</button></div></div>`;
     if (U.mode === 'compare') {
